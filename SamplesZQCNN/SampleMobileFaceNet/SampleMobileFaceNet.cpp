@@ -1,8 +1,17 @@
 #include "ZQ_CNN_Net.h"
-#include <cblas.h>
 #include <vector>
 #include <iostream>
-#include "opencv2\opencv.hpp"
+#include "opencv2/opencv.hpp"
+#include "ZQ_CNN_CompileConfig.h"
+#if ZQ_CNN_USE_BLAS_GEMM
+#include <openblas/cblas.h>
+#pragma comment(lib,"libopenblas.lib")
+#elif ZQ_CNN_USE_MKL_GEMM
+#include <mkl/mkl.h>
+#pragma comment(lib,"mklml.lib")
+#else
+#pragma comment(lib,"ZQ_GEMM.lib")
+#endif
 using namespace ZQ;
 using namespace std;
 using namespace cv;
@@ -15,14 +24,19 @@ int main()
 	printf("The automatically converted proto file has two many blobs, wasting too much time.\n"
 	"You can remove some blobs and layers by hand!\n\n\n");
 
+#if ZQ_CNN_USE_BLAS_GEMM
 	openblas_set_num_threads(1);
-	Mat image0 = cv::imread("data\\00_.jpg", 1);
+#elif ZQ_CNN_USE_MKL_GEMM
+	mkl_set_num_threads(1);
+#endif
+
+	Mat image0 = cv::imread("data/00_.jpg", 1);
 	if (image0.empty())
 	{
 		cout << "empty image\n";
 		return EXIT_FAILURE;
 	}
-	Mat image1 = cv::imread("data\\01_.jpg", 1);
+	Mat image1 = cv::imread("data/01_.jpg", 1);
 	if (image1.empty())
 	{
 		cout << "empty image\n";
@@ -36,7 +50,7 @@ int main()
 	std::string out_blob_name = "fc1";
 	ZQ_CNN_Net net;
 
-	if (!net.LoadFrom("model\\test.zqparams", "model\\test.nchwbin"))
+	if (!net.LoadFrom("model/test.zqparams", "model/test.nchwbin"))
 	{
 		cout << "failed to load net\n";
 		return EXIT_FAILURE;
@@ -47,7 +61,7 @@ int main()
 	for (int it = 0; it < iters; it++)
 	{
 		double t3 = omp_get_wtime();
-		if (!net.Forward(input0, 1))
+		if (!net.Forward(input0))
 		{
 			cout << "failed to run\n";
 			return EXIT_FAILURE;
@@ -67,7 +81,7 @@ int main()
 	double t3 = omp_get_wtime();
 	for (int it = 0; it < iters; it++)
 	{
-		if (!net.Forward(input1, 1))
+		if (!net.Forward(input1))
 		{
 			cout << "failed to run\n";
 			return EXIT_FAILURE;

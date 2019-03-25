@@ -30,7 +30,7 @@ namespace ZQ
 		}
 	};
 
-	using ZQ_CNN_LabelBBox = std::map<int, std::vector<ZQ_CNN_NormalizedBBox>>;
+	using ZQ_CNN_LabelBBox = std::map<int, std::vector<ZQ_CNN_NormalizedBBox> >;
 
 	class ZQ_CNN_BBox
 	{
@@ -42,6 +42,7 @@ namespace ZQ
 		int col2;
 		float area;
 		bool exist;
+		bool need_check_overlap_count;
 		float ppoint[10];
 		float regreCoord[4];
 
@@ -62,6 +63,42 @@ namespace ZQ
 		bool WriteBinary(FILE* out) const
 		{
 			if (fwrite(this, sizeof(ZQ_CNN_BBox), 1, out) != 1)
+				return false;
+			return true;
+		}
+	};
+
+	class ZQ_CNN_BBox106
+	{
+	public:
+		float score;
+		int row1;
+		int col1;
+		int row2;
+		int col2;
+		float area;
+		bool exist;
+		bool need_check_overlap_count;
+		float ppoint[212];
+		float regreCoord[4];
+
+		ZQ_CNN_BBox106()
+		{
+			memset(this, 0, sizeof(ZQ_CNN_BBox106));
+		}
+
+		~ZQ_CNN_BBox106() {}
+
+		bool ReadFromBinary(FILE* in)
+		{
+			if (fread(this, sizeof(ZQ_CNN_BBox106), 1, in) != 1)
+				return false;
+			return true;
+		}
+
+		bool WriteBinary(FILE* out) const
+		{
+			if (fwrite(this, sizeof(ZQ_CNN_BBox106), 1, out) != 1)
 				return false;
 			return true;
 		}

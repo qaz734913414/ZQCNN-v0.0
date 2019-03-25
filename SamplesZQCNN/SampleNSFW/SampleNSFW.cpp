@@ -1,23 +1,40 @@
 #include "ZQ_CNN_Net.h"
 #include "ZQ_CNN_NSFW.h"
-#include <cblas.h>
 #include <vector>
 #include <iostream>
-#include "opencv2\opencv.hpp"
+#include "opencv2/opencv.hpp"
+#include "ZQ_CNN_CompileConfig.h"
+#if ZQ_CNN_USE_BLAS_GEMM
+#include <openblas/cblas.h>
+#pragma comment(lib,"libopenblas.lib")
+#elif ZQ_CNN_USE_MKL_GEMM
+#include <mkl/mkl.h>
+#pragma comment(lib,"mklml.lib")
+#else
+#pragma comment(lib,"ZQ_GEMM.lib")
+#endif
 using namespace ZQ;
 using namespace std;
 using namespace cv;
 
 int main()
 {
+	int num_threads = 1;
+
+#if ZQ_CNN_USE_BLAS_GEMM
+	openblas_set_num_threads(num_threads);
+#elif ZQ_CNN_USE_MKL_GEMM
+	mkl_set_num_threads(num_threads);
+#endif
+
 	ZQ_CNN_NSFW nsfw;
-	if (!nsfw.Init("model\\nsfw.zqparams", "model\\nsfw.nchwbin", "prob"))
+	if (!nsfw.Init("model/nsfw.zqparams", "model/nsfw.nchwbin", "prob"))
 	{
 		printf("failed to init net\n");
 		return EXIT_FAILURE;
 	}
 
-	Mat image = cv::imread("data\\1.jpg", 1);
+	Mat image = cv::imread("data/sex.jpg", 1);
 	if (image.empty())
 	{
 		cout << "empty image\n";
@@ -32,7 +49,7 @@ int main()
 	}
 	printf("\n");
 
-	image = cv::imread("data\\4.jpg", 1);
+	image = cv::imread("data/4.jpg", 1);
 	if (image.empty())
 	{
 		cout << "empty image\n";
@@ -52,8 +69,12 @@ int main()
 int main1()
 {
 	int num_threads = 1;
+
+#if ZQ_CNN_USE_BLAS_GEMM
 	openblas_set_num_threads(num_threads);
-	Mat image = cv::imread("data\\sex.jpg", 1);
+#endif
+
+	Mat image = cv::imread("data/sex.jpg", 1);
 	if (image.empty())
 	{
 		cout << "empty image\n";
@@ -81,7 +102,7 @@ int main1()
 	std::string out_blob_name = "prob";
 	ZQ_CNN_Net net;
 
-	if (!net.LoadFrom("model\\nsfw.zqparams", "model\\nsfw.nchwbin"))
+	if (!net.LoadFrom("model/nsfw.zqparams", "model/nsfw.nchwbin"))
 	{
 		cout << "failed to load net\n";
 		return EXIT_FAILURE;
@@ -93,7 +114,7 @@ int main1()
 	for (int it = 0; it < iters; it++)
 	{
 		double t3 = omp_get_wtime();
-		if (!net.Forward(input, 1))
+		if (!net.Forward(input))
 		{
 			cout << "failed to run\n";
 			return EXIT_FAILURE;

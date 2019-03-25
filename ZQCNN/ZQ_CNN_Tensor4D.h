@@ -2,6 +2,7 @@
 #define _ZQ_CNN_TENSOR_4D_H_
 #pragma once
 #include "ZQ_CNN_Defines.h"
+#include "ZQ_CNN_CompileConfig.h"
 #include <string.h>
 #include <stdlib.h>
 #include <vector>
@@ -18,7 +19,7 @@ namespace ZQ
 		};
 
 	public:
-
+		virtual ~ZQ_CNN_Tensor4D() {}
 		float* const GetFirstPixelPtr() { return firstPixelData; }
 		const float* GetFirstPixelPtr() const { return firstPixelData; }
 		void SetShape(int in_N, int in_C, int in_H, int in_W) { shape_nchw[0] = in_N; shape_nchw[1] = in_C; shape_nchw[2] = in_H; shape_nchw[3] = in_W; }
@@ -47,6 +48,62 @@ namespace ZQ
 		virtual bool ChangeSize(int N, int H, int W, int C, int borderW, int borderH) = 0;
 		virtual void ShrinkToFit() = 0;
 		virtual bool IsBorderEnabled() const = 0;
+
+		virtual bool ROI(ZQ_CNN_Tensor4D& dst, int off_x, int off_y, int width, int height, int dst_borderH, int dst_borderW) const 
+		{
+			if (off_x < 0 || off_y < 0 || off_x + width > W || off_y + height > H)
+				return false;
+
+			if (!dst.ChangeSize(N, height, width, C, dst_borderH, dst_borderW))
+				return false;
+			int dstWidthStep = dst.GetWidthStep();
+			int dstPixelStep = dst.GetPixelStep();
+			int dstSliceStep = dst.GetSliceStep();
+			int align_mode = __min(GetAlignType(), dst.GetAlignType());
+			const float* src_slice_ptr = GetFirstPixelPtr() + off_y * widthStep + off_x*pixelStep;
+			float* dst_slice_ptr = dst.GetFirstPixelPtr();
+			for (int n = 0; n < N; n++)
+			{
+				const float* src_row_ptr = src_slice_ptr;
+				float* dst_row_ptr = dst_slice_ptr;
+				for (int h = 0; h < height; h++)
+				{
+					const float* src_pix_ptr = src_row_ptr;
+					float* dst_pix_ptr = dst_row_ptr;
+					for (int w = 0; w < width; w++)
+					{
+						memcpy(dst_pix_ptr, src_pix_ptr, sizeof(float)*C);
+						if (C < dstPixelStep)
+							memset(dst_pix_ptr + C, 0, sizeof(float)*(dstPixelStep - C));
+						src_pix_ptr += pixelStep;
+						dst_pix_ptr += dstPixelStep;
+					}
+					src_row_ptr += widthStep;
+					dst_row_ptr += dstWidthStep;
+				}
+				src_slice_ptr += sliceStep;
+				dst_slice_ptr += dstSliceStep;
+			}
+			dst_slice_ptr = dst.GetFirstPixelPtr();
+			for (int n = 0; n < N; n++, dst_slice_ptr += dstSliceStep)
+			{
+				if (dst_borderH > 0)
+				{
+					memset(dst_slice_ptr - dstPixelStep*dst_borderW - dstWidthStep*dst_borderH, 0, sizeof(float)*dstWidthStep*dst_borderH);
+					memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*height, 0, sizeof(float)*dstWidthStep*dst_borderH);
+				}
+				if (dst_borderW > 0)
+				{
+					for (int h = 0; h < dst_borderH; h++)
+					{
+						memset(dst_slice_ptr - dstPixelStep*dst_borderW + dstWidthStep*h, 0, sizeof(float)*dstPixelStep*dst_borderW);
+						memset(dst_slice_ptr - dstPixelStep*(dst_borderW << 1) + dstWidthStep*(h + 1), 0, sizeof(float)*dstPixelStep*dst_borderW);
+					}
+				}
+			}
+			return true;
+		}
+
 		virtual bool ConvertFromCompactNCHW(const float* data, int N, int C, int H, int W, int borderW = 0, int borderH = 0)
 		{
 			if (data == 0 || !ChangeSize(N, H, W, C, borderW, borderH))
@@ -105,6 +162,82 @@ namespace ZQ
 					}
 				}
 
+			}
+			return true;
+		}
+
+		virtual bool Tile(ZQ_CNN_Tensor4D& out, int tile_n, int tile_h, int tile_w, int tile_c) const
+		{
+			int out_N = N*tile_n;
+			int out_H = H*tile_h;
+			int out_W = W*tile_w;
+			int out_C = C*tile_c;
+			if (out_N <= 0 || out_H <= 0 || out_W <= 0 || out_C <= 0)
+				return false;
+			if (out.N != out_N || out.H != out_H || out.W != out_W || out.C != out_C)
+				out.ChangeSize(out_N, out_H, out_W, out_C, 0, 0);
+			const float* in_slice_ptr, *in_row_ptr, *in_pix_ptr, *in_c_ptr;
+			float* out_slice_ptr, *out_row_ptr, *out_pix_ptr, *out_c_ptr;
+			int n, h, w;
+
+			// Tile C
+			for (n = 0, in_slice_ptr = firstPixelData, out_slice_ptr = out.firstPixelData;
+				n < N;
+				n++, in_slice_ptr += sliceStep, out_slice_ptr += sliceStep)
+			{
+				for (h = 0, in_row_ptr = in_slice_ptr, out_row_ptr = out_slice_ptr;
+					h < H;
+					h++, in_row_ptr += widthStep, out_row_ptr += out.widthStep)
+				{
+					for (w = 0, in_pix_ptr = in_row_ptr, out_pix_ptr = out_row_ptr;
+						w < W;
+						w++, in_pix_ptr += pixelStep, out_pix_ptr += out.pixelStep)
+					{
+						in_c_ptr = in_pix_ptr;
+						out_c_ptr = out_pix_ptr;
+						for (int tc = 0; tc < tile_c; tc++)
+						{
+							memcpy(out_c_ptr, in_c_ptr, sizeof(float)*C);
+							out_c_ptr += C;
+						}
+					}
+				}
+			}
+
+			//Tile W
+			for (n = 0, out_slice_ptr = out.firstPixelData; n < tile_n; n++,out_slice_ptr += out.sliceStep)
+			{
+				for (h = 0, out_row_ptr = out_slice_ptr; h < tile_h; h++, out_row_ptr += out.widthStep)
+				{
+					int elt_num = out.pixelStep*W;
+					in_pix_ptr = out_row_ptr;
+					out_pix_ptr = out_row_ptr;
+					for (w = 1; w < tile_w; w++)
+					{
+						memcpy(out_pix_ptr+w*elt_num, in_pix_ptr, sizeof(float)*elt_num);
+					}
+				}
+			}
+
+			//Tile H
+			for (n = 0, out_slice_ptr = out.firstPixelData; n < tile_n; n++, out_slice_ptr += out.sliceStep)
+			{
+				int elt_num = out.widthStep*H;
+				in_row_ptr = out_slice_ptr;
+				out_row_ptr = out_slice_ptr;
+				for (h = 1; h < tile_h; h++)
+				{
+					memcpy(out_row_ptr+h*elt_num, in_row_ptr, sizeof(float)*elt_num);
+				}
+			}
+
+			//Tile N
+			int elt_num = out.sliceStep*N;
+			out_slice_ptr = out.firstPixelData;
+			in_slice_ptr = out_slice_ptr;
+			for (n = 1; n < tile_n; n++)
+			{
+				memcpy(out_slice_ptr+n*elt_num, in_slice_ptr, sizeof(float)*elt_num);
 			}
 			return true;
 		}

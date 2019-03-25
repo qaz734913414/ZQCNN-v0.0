@@ -1,7 +1,16 @@
+#if defined(_WIN32)
 #include "ZQ_FaceIDPrecisionEvaluation.h"
 #include "ZQ_FaceRecognizerArcFaceZQCNN.h"
-#include "cblas.h"
-
+#include "ZQ_CNN_CompileConfig.h"
+#if ZQ_CNN_USE_BLAS_GEMM
+#include <openblas\cblas.h>
+#pragma comment(lib,"libopenblas.lib")
+#elif ZQ_CNN_USE_MKL_GEMM
+#include <mkl\mkl.h>
+#pragma comment(lib,"mklml.lib")
+#else
+#pragma comment(lib,"ZQ_GEMM.lib")
+#endif
 using namespace std;
 using namespace ZQ;
 
@@ -11,18 +20,16 @@ bool EvaluationArcFaceZQCNNOnLFW(const std::string& prototxt_file, const std::st
 	int real_num_threads = __max(1, __min(max_thread_num, omp_get_num_procs() - 1));
 
 	std::vector<ZQ_FaceRecognizer*> recognizers(real_num_threads);
-
 	for (int i = 0; i < real_num_threads; i++)
 	{
 		recognizers[i] = new ZQ_FaceRecognizerArcFaceZQCNN();
 		if (!recognizers[i]->Init("", prototxt_file, caffemodel_file, out_blob_name))
 		{
-			printf("failed to load sphereface prototxt: %s, caffemodel %s\n", prototxt_file.c_str(), caffemodel_file.c_str());
+			printf("failed to load prototxt: %s, caffemodel %s\n", prototxt_file.c_str(), caffemodel_file.c_str());
 			return false;
 		}
 	}
 	printf("load arcface done!\n");
-
 	return ZQ_FaceIDPrecisionEvaluation::EvaluationOnLFW(recognizers, list_file, folder, use_flip);
 }
 
@@ -41,7 +48,11 @@ int main(int argc, const char** argv)
 	if (argc > 7)
 		use_flip = atoi(argv[7]);
 
+#if ZQ_CNN_USE_BLAS_GEMM
 	openblas_set_num_threads(1);
+#elif ZQ_CNN_USE_MKL_GEMM
+	mkl_set_num_threads(1);
+#endif
 
 	double t1 = omp_get_wtime();
 	if (!EvaluationArcFaceZQCNNOnLFW(string(argv[1]), string(argv[2]), string(argv[3]), string(argv[4]), string(argv[5]), max_thread_num, use_flip))
@@ -50,3 +61,12 @@ int main(int argc, const char** argv)
 	printf("total cost: %.3f secs\n", t2 - t1);
 	return EXIT_SUCCESS;
 }
+
+#else
+#include <stdio.h>
+int main(int argc, const char** argv)
+{
+	printf("%s only support windows\n", argv[0]);
+	return 0;
+}
+#endif

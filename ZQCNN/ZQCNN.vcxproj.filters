@@ -63,9 +63,6 @@
     <ClCompile Include="layers_c\zq_cnn_softmax_32f_align_c.c">
       <Filter>layers_c</Filter>
     </ClCompile>
-    <ClCompile Include="math\zq_avx_mathfun.c">
-      <Filter>math</Filter>
-    </ClCompile>
     <ClCompile Include="math\zq_sse_mathfun.c">
       <Filter>math</Filter>
     </ClCompile>
@@ -83,6 +80,15 @@
     </ClCompile>
     <ClCompile Include="layers_c\zq_cnn_normalize_32f_align_c.c">
       <Filter>layers_c</Filter>
+    </ClCompile>
+    <ClCompile Include="layers_c\zq_cnn_sqrt_32f_align_c.c">
+      <Filter>layers_c</Filter>
+    </ClCompile>
+    <ClCompile Include="layers_c\zq_cnn_reduction_32f_align_c.c">
+      <Filter>layers_c</Filter>
+    </ClCompile>
+    <ClCompile Include="math\zq_avx_mathfun.c">
+      <Filter>math</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -170,9 +176,6 @@
     <ClInclude Include="layers_c\zq_cnn_softmax_32f_align_c_raw.h">
       <Filter>layers_c</Filter>
     </ClInclude>
-    <ClInclude Include="math\zq_avx_mathfun.h">
-      <Filter>math</Filter>
-    </ClInclude>
     <ClInclude Include="math\zq_sse_mathfun.h">
       <Filter>math</Filter>
     </ClInclude>
@@ -186,9 +189,6 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="ZQ_CNN_Tensor4D.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="ZQ_CNN_MTCNN.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="ZQ_CNN_Defines.h">
@@ -229,6 +229,27 @@
     </ClInclude>
     <ClInclude Include="ZQ_CNN_NSFW.h">
       <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ZQ_CNN_MouthDetector.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_c\zq_cnn_sqrt_32f_align_c.h">
+      <Filter>layers_c</Filter>
+    </ClInclude>
+    <ClInclude Include="layers_c\zq_cnn_reduction_32f_align_c.h">
+      <Filter>layers_c</Filter>
+    </ClInclude>
+    <ClInclude Include="ZQ_CNN_CompileConfig.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ZQ_CNN_MTCNN_old.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ZQ_CNN_MTCNN.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="math\zq_avx_mathfun.h">
+      <Filter>math</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

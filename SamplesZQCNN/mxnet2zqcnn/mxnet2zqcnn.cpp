@@ -42,6 +42,7 @@ public:
 		operator float() const { return _n->attr_f(_key); }
 		operator std::string() const { return _n->attr_s(_key); }
 		operator std::vector<int>() const { return _n->attr_ai(_key); }
+		operator std::vector<float>() const { return _n->attr_af(_key); }
 	};
 
 	AttrProxy attr(const char* key) const { return AttrProxy(this, key); }
@@ -50,6 +51,7 @@ public:
 	float attr_f(const char* key) const;
 	std::string attr_s(const char* key) const;
 	std::vector<int> attr_ai(const char* key) const;
+	std::vector<float> attr_af(const char* key) const;
 
 public:
 	bool is_weight() const;
@@ -146,6 +148,32 @@ std::vector<int> MXNetNode::attr_ai(const char* key) const
 		i = 0;
 		c += nconsumed;
 		nscan = sscanf(it->second.c_str() + c, "%*[(,]%d%n", &i, &nconsumed);
+	}
+
+	return list;
+}
+
+std::vector<float> MXNetNode::attr_af(const char* key) const
+{
+	const std::map<std::string, std::string>::const_iterator it = attrs.find(key);
+	if (it == attrs.end())
+		return std::vector<float>();
+
+	// (1,2,3)
+	std::vector<float> list;
+
+	float i = 0;
+	int c = 0;
+	int nconsumed = 0;
+	int nscan = sscanf(it->second.c_str() + c, "%*[(,]%f%n", &i, &nconsumed);
+	while (nscan == 1)
+	{
+		list.push_back(i);
+		//         fprintf(stderr, "%d\n", i);
+
+		i = 0;
+		c += nconsumed;
+		nscan = sscanf(it->second.c_str() + c, "%*[(,]%f%n", &i, &nconsumed);
 	}
 
 	return list;
@@ -854,19 +882,19 @@ int main(int argc, char** argv)
 		}
 		else if (n.op == "broadcast_add")
 		{
-			fprintf(pp, "%-16s", "BinaryOp");
+			fprintf(pp, "%-16s", "UnaryOperation operation=add");
 		}
 		else if (n.op == "broadcast_div")
 		{
-			fprintf(pp, "%-16s", "BinaryOp");
+			fprintf(pp, "%-16s", "UnaryOperation operation=rdiv");
 		}
 		else if (n.op == "broadcast_mul")
 		{
-			fprintf(pp, "%-16s", "BinaryOp");
+			fprintf(pp, "%-16s", "UnaryOperation operation=mul");
 		}
 		else if (n.op == "broadcast_sub")
 		{
-			fprintf(pp, "%-16s", "BinaryOp");
+			fprintf(pp, "%-16s", "UnaryOperation operation=rminus");
 		}
 		else if (n.op == "ceil")
 		{
@@ -995,7 +1023,7 @@ int main(int argc, char** argv)
 		}
 		else if (n.op == "mean")
 		{
-			fprintf(pp, "%-16s", "Reduction");
+			fprintf(pp, "%-16s", "Reduction operation=mean");
 		}
 		else if (n.op == "min")
 		{
@@ -1042,7 +1070,7 @@ int main(int argc, char** argv)
 			fprintf(pp, "%-16s", "Slice");
 			output_size = n.attr("num_outputs");
 		}
-		else if (n.op == "SoftmaxOutput")
+		else if (n.op == "SoftmaxOutput" || n.op == "softmax" || n.op == "Softmax")
 		{
 			fprintf(pp, "%-16s", "Softmax");
 		}
@@ -1052,7 +1080,7 @@ int main(int argc, char** argv)
 		}
 		else if (n.op == "sqrt")
 		{
-			fprintf(pp, "%-16s", "UnaryOp");
+			fprintf(pp, "%-16s", "Sqrt");
 		}
 		else if (n.op == "square")
 		{
@@ -1060,7 +1088,7 @@ int main(int argc, char** argv)
 		}
 		else if (n.op == "sum")
 		{
-			fprintf(pp, "%-16s", "Reduction");
+			fprintf(pp, "%-16s", "Reduction operation=sum");
 		}
 		else if (n.op == "tan")
 		{
@@ -1070,9 +1098,21 @@ int main(int argc, char** argv)
 		{
 			fprintf(pp, "%-16s", "TanH");
 		}
-		else if (n.op == "Transpose")
+		else if (n.op == "Transpose" || n.op == "transpose")
 		{
 			fprintf(pp, "%-16s", "Permute");
+		}
+		else if (n.op == "tile")
+		{
+			fprintf(pp, "%--16s", "Tile");
+		}
+		else if (n.op == "_contrib_MultiBoxPrior")
+		{
+			fprintf(pp, "%--16s", "PriorBox_MXNET");
+		}
+		else if (n.op == "_contrib_MultiBoxDetection")
+		{
+			fprintf(pp, "%--16s", "DetectionOutput_MXNET");
 		}
 		else
 		{
@@ -1316,23 +1356,23 @@ int main(int argc, char** argv)
 		}
 		else if (n.op == "broadcast_add")
 		{
-			int op_type = 0;
-			fprintf(pp, " 0=%d", op_type);
+			/*int op_type = 0;
+			fprintf(pp, " 0=%d", op_type);*/
 		}
 		else if (n.op == "broadcast_div")
 		{
-			int op_type = 3;
-			fprintf(pp, " 0=%d", op_type);
+			/*int op_type = 3;
+			fprintf(pp, " 0=%d", op_type);*/
 		}
 		else if (n.op == "broadcast_mul")
 		{
-			int op_type = 2;
-			fprintf(pp, " 0=%d", op_type);
+			/*int op_type = 2;
+			fprintf(pp, " 0=%d", op_type);*/
 		}
 		else if (n.op == "broadcast_sub")
 		{
-			int op_type = 1;
-			fprintf(pp, " 0=%d", op_type);
+			/*int op_type = 1;
+			fprintf(pp, " 0=%d", op_type);*/
 		}
 		else if (n.op == "ceil")
 		{
@@ -1660,7 +1700,7 @@ int main(int argc, char** argv)
 			else if (type == "leaky")
 			{
 				float slope = n.has_attr("slope") ? n.attr("slope") : 0.25f;
-				fprintf(pp, " 0=%f", slope);
+				fprintf(pp, " slope=%f", slope);
 			}
 			else if (type == "prelu")
 			{
@@ -1691,8 +1731,19 @@ int main(int argc, char** argv)
 		}
 		else if (n.op == "mean")
 		{
-			int operation = 3;
-			fprintf(pp, " 0=%d", operation);
+			/*int operation = 3;
+			fprintf(pp, " 0=%d", operation);*/
+			std::string axes = n.attr("axis");
+			std::string keepdims = n.attr("keepdims");
+			if (!axes.empty())
+			{
+				fprintf(pp, " axis=%s", axes.c_str());
+			}
+			if (!keepdims.empty())
+			{
+				if (keepdims == "True")
+					fprintf(pp, " keepdims=1");
+			}
 		}
 		else if (n.op == "min")
 		{
@@ -1780,30 +1831,25 @@ int main(int argc, char** argv)
 			std::vector<int> shape = n.attr("shape");
 
 			if (shape.size() == 1) {
-				fprintf(pp, " 0=%d", shape[0]);// should never reach here
+				fprintf(pp, " dim=%d", shape[0]);// should never reach here
 			}
 			else if (shape.size() == 2) {
 				//fprintf(pp, " 0=%d", shape[1]);
-				fprintf(pp, " dim=%d", shape[1]);
+				fprintf(pp, " dim=%d dim=%d", shape[0], shape[1]);
 				
 			}
 			else if (shape.size() == 3) {
 				//fprintf(pp, " 0=%d", shape[2]);
 				//fprintf(pp, " 1=%d", shape[1]);
-				fprintf(pp, " dim=%d dim=%d", shape[2],shape[1]);
+				fprintf(pp, " dim=%d dim=%d dim=%d", shape[0],shape[1],shape[2]);
 			}
 			else if (shape.size() == 4) {
 				//fprintf(pp, " 0=%d", shape[3]);
 				//fprintf(pp, " 1=%d", shape[2]);
 				//fprintf(pp, " 2=%d", shape[1]);
-				fprintf(pp, " dim=%d dim=%d dim=%d", shape[3], shape[2], shape[1]);
+				fprintf(pp, " dim=%d dim=%d dim=%d dim=%d", shape[0], shape[1], shape[2],shape[3]);
 			}
-			else if (shape.size() == 5) {
-				//fprintf(pp, " 0=%d", shape[4] * shape[3]);
-				//fprintf(pp, " 1=%d", shape[2]);
-				//fprintf(pp, " 2=%d", shape[1]);
-				fprintf(pp, " dim=%d dim=%d dim=%d", shape[4] * shape[3], shape[2], shape[1]);
-			}
+			
 		}
 		else if (n.op == "sigmoid")
 		{
@@ -1829,8 +1875,8 @@ int main(int argc, char** argv)
 		}
 		else if (n.op == "sqrt")
 		{
-			int op_type = 5;
-			fprintf(pp, " 0=%d", op_type);
+			/*int op_type = 5;
+			fprintf(pp, " 0=%d", op_type);*/
 		}
 		else if (n.op == "square")
 		{
@@ -1839,8 +1885,19 @@ int main(int argc, char** argv)
 		}
 		else if (n.op == "sum")
 		{
-			int operation = 0;
-			fprintf(pp, " 0=%d", operation);
+			/*int operation = 0;
+			fprintf(pp, " 0=%d", operation);*/
+			std::string axes = n.attr("axis");
+			std::string keepdims = n.attr("keepdims");
+			if (!axes.empty())
+			{
+				fprintf(pp, " axis=%s", axes.c_str());
+			}
+			if (!keepdims.empty())
+			{
+				if(keepdims == "True")
+					fprintf(pp, " keepdims=1");
+			}
 		}
 		else if (n.op == "tan")
 		{
@@ -1850,40 +1907,113 @@ int main(int argc, char** argv)
 		else if (n.op == "tanh")
 		{
 		}
-		else if (n.op == "Transpose")
+		else if (n.op == "Transpose" || n.op == "transpose")
 		{
 			std::vector<int> axes = n.attr("axes");
 
 			if (axes.size() == 4) {
-				if (axes[1] == 1 && axes[2] == 2 && axes[3] == 3)
-					fprintf(pp, " 0=0");// w h c
-				else if (axes[1] == 1 && axes[2] == 3 && axes[3] == 2)
-					fprintf(pp, " 0=1");// h w c
-				else if (axes[1] == 2 && axes[2] == 1 && axes[3] == 3)
-					fprintf(pp, " 0=2");// w c h
-				else if (axes[1] == 2 && axes[2] == 3 && axes[3] == 1)
-					fprintf(pp, " 0=3");// c w h
-				else if (axes[1] == 3 && axes[2] == 1 && axes[3] == 2)
-					fprintf(pp, " 0=4");// h c w
-				else if (axes[1] == 3 && axes[2] == 2 && axes[3] == 1)
-					fprintf(pp, " 0=5");// c h w
+				fprintf(pp, " order=%d order=%d order=%d order=%d", axes[0], axes[1], axes[2], axes[3]);
 			}
-			else if (axes.size() == 5) {
-				if (axes[1] == 1 && axes[2] == 2 && axes[3] == 3 && axes[4] == 4)
-					fprintf(pp, " 0=0");// wx h c
-				else if (axes[1] == 1 && axes[2] == 3 && axes[3] == 4 && axes[4] == 2)
-					fprintf(pp, " 0=1");// h wx c
-				else if (axes[1] == 2 && axes[2] == 1 && axes[3] == 3 && axes[4] == 4)
-					fprintf(pp, " 0=2");// wx c h
-				else if (axes[1] == 2 && axes[2] == 3 && axes[3] == 4 && axes[4] == 1)
-					fprintf(pp, " 0=3");// c wx h
-				else if (axes[1] == 3 && axes[2] == 4 && axes[3] == 1 && axes[4] == 2)
-					fprintf(pp, " 0=4");// h c wx
-				else if (axes[1] == 3 && axes[2] == 4 && axes[3] == 2 && axes[4] == 1)
-					fprintf(pp, " 0=5");// c h wx
-				else
-					fprintf(stderr, "Unsupported transpose type !\n");
+			else if (axes.size() == 3) {
+				fprintf(pp, " order=%d order=%d order=%d order=3", axes[0], axes[1], axes[2]);
 			}
+			else if (axes.size() == 2) {
+				fprintf(pp, " order=%d order=%d order=2 order=3", axes[0], axes[1]);
+			}
+			
+		}
+		else if (n.op == "tile")
+		{
+			std::vector<int> reps = n.attr("reps");
+
+			if (reps.size() == 4) {
+				fprintf(pp, " n=%d c=%d h=%d w=%d ", reps[0], reps[1], reps[2], reps[3]);
+			}
+		}
+		else if (n.op == "_contrib_MultiBoxPrior")
+		{
+			int clip = n.attr("clip");
+			std::vector<float> ratios = n.attr("ratios");
+			std::vector<float> sizes = n.attr("sizes");
+			std::vector<float> steps = n.attr("steps");
+			
+			for (int i = 0; i < ratios.size(); i++)
+			{
+				if (ratios[i] != 1.0f)
+				{
+					fprintf(pp, " aspect_ratio=%.2f", ratios[i]);
+				}
+			}
+			
+			fprintf(pp, " size=%.2f size=%.2f", sizes[0], sizes[1]);
+
+			if (n.has_attr("variances"))
+			{
+				std::vector<float> variances = n.attr("variances");
+				if (variances.size() != 4)
+				{
+					printf("variances size not equal 4\n");
+				}
+				for(int cur_i = 0;cur_i < variances.size();cur_i ++)
+					fprintf(pp, " variance=%.2f", variances[cur_i]);
+			}
+			else
+			{
+				float variances[4] = { 0.1f, 0.1f, 0.2f, 0.2f };
+				for (int cur_i = 0; cur_i < 4; cur_i++)
+					fprintf(pp, " variance=%.2f", variances[cur_i]);
+			}
+		
+			fprintf(pp, " clip=%d", clip);
+
+
+			if (steps.empty() || (steps[0] == -1.f && steps[1] == -1.f))
+			{
+				// auto step
+			}
+			else
+			{
+				fprintf(stderr, "Unsupported steps param! %f %f\n", steps[0], steps[1]);
+			}
+
+			std::vector<float> offsets = n.attr("offsets");
+			if (offsets.empty() || (offsets[0] == 0.5f && offsets[1] == 0.5f))
+			{
+				fprintf(pp, " offset=0.5");
+			}
+			else
+			{
+				fprintf(stderr, "Unsupported offsets param! %f %f\n", offsets[0], offsets[1]);
+			}
+		}
+		else if (n.op == "_contrib_MultiBoxDetection")
+		{
+			float threshold = n.has_attr("threshold") ? n.attr("threshold") : 0.01f;
+			float nms_threshold = n.has_attr("nms_threshold") ? n.attr("nms_threshold") : 0.5f;
+			int nms_topk = n.has_attr("nms_topk") ? n.attr("nms_topk") : 300;
+
+			fprintf(pp, " nms_threshold=%.3f nms_top_k=%d", nms_threshold,nms_topk);
+			
+			if (n.has_attr("variances"))
+			{
+				std::vector<float> variances = n.attr("variances");
+				if (variances.size() != 4)
+				{
+					printf("variances size not equal 4\n");
+				}
+				for (int cur_i = 0; cur_i < variances.size(); cur_i++)
+					fprintf(pp, " variance=%.2f", variances[cur_i]);
+			}
+			else
+			{
+				float variances[4] = { 0.1f, 0.1f, 0.2f, 0.2f };
+				for (int cur_i = 0; cur_i < 4; cur_i++)
+					fprintf(pp, " variance=%.2f", variances[cur_i]);
+			}
+
+			int keep_top_k = 100;
+			fprintf(pp, " keep_top_k=%d", keep_top_k);
+			fprintf(pp, " confidence_threshold=%.3f", threshold);
 		}
 		else
 		{

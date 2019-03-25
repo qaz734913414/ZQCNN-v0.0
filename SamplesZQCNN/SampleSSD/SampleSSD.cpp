@@ -1,8 +1,18 @@
 #include "ZQ_CNN_SSD.h"
-#include <cblas.h>
 #include <vector>
 #include <iostream>
-#include "opencv2\opencv.hpp"
+#include "opencv2/opencv.hpp"
+#include "ZQ_CNN_CompileConfig.h"
+#if ZQ_CNN_USE_BLAS_GEMM
+#include <openblas/cblas.h>
+#pragma comment(lib,"libopenblas.lib")
+#elif ZQ_CNN_USE_MKL_GEMM
+#include <mkl/mkl.h>
+#pragma comment(lib,"mklml.lib")
+#else
+#pragma comment(lib,"ZQ_GEMM.lib")
+#endif
+
 using namespace ZQ;
 using namespace std;
 using namespace cv;
@@ -11,28 +21,36 @@ using namespace cv;
 
 int main()
 {
-	int thread_num = 4;
+	int thread_num = 1;
+
+#if ZQ_CNN_USE_BLAS_GEMM
 	openblas_set_num_threads(thread_num);
-	
-	Mat img0 = cv::imread("data\\004545.jpg", 1);
-	//Mat img0 = cv::imread("data\\face1.jpg", 1);
-	if (img0.empty())
+#elif ZQ_CNN_USE_MKL_GEMM
+	mkl_set_num_threads(thread_num);
+#endif
+
+	Mat img0;
+	//Mat img1 = cv::imread("data/dog.jpg", 1);
+	Mat img1 = cv::imread("data/004545.jpg", 1);
+	if (img1.empty())
 	{
 		cout << "empty image\n";
 		return EXIT_FAILURE;
 	}
-	
+	cv::cvtColor(img1, img0, CV_BGR2RGB);
+	//img0 = img1;
 	ZQ_CNN_SSD detector;
-	if (!detector.Init("model\\MobileNetSSD_deploy.zqparams", "model\\MobileNetSSD_deploy.nchwbin", "detection_out"))
+	//if (!detector.Init("model/MobileNetSSD_deploy.zqparams", "model/MobileNetSSD_deploy.nchwbin", "detection_out"))
+	if (!detector.Init("model/ssd-300.zqparams", "model/ssd-300.nchwbin", "detection", true))
 	{
 		printf("failed to init detector!\n");
 		return false;
 	}
 	
-	int out_iter = 10;
+	int out_iter = 1;
 	int iters = 1;
 	std::vector<ZQ_CNN_SSD::BBox> output;
-	const float kScoreThreshold = 0.5f;
+	const float kScoreThreshold = 0.3f;
 	for (int out_it = 0; out_it < out_iter; out_it++)
 	{
 		double t1 = omp_get_wtime();
@@ -58,14 +76,18 @@ int main()
 	for (auto& bbox : output) 
 	{
 		cv::Rect rect(bbox.col1, bbox.row1, bbox.col2 - bbox.col1 + 1, bbox.row2 - bbox.row1 + 1);
-		cv::rectangle(img0, rect, cv::Scalar(0, 0, 255), 2);
+		cv::rectangle(img1, rect, cv::Scalar(0, 0, 255), 2);
 		char buff[300];
+#if defined(_WIN32)
 		sprintf_s(buff, 300, "%s: %.2f", kClassNames[bbox.label], bbox.score);
-		cv::putText(img0, buff, cv::Point(bbox.col1, bbox.row1), FONT_HERSHEY_PLAIN, 1, Scalar(0, 255, 0));
+#else
+		sprintf(buff, "%s: %.2f", kClassNames[bbox.label], bbox.score);
+#endif
+		cv::putText(img1, buff, cv::Point(bbox.col1, bbox.row1), FONT_HERSHEY_PLAIN, 1, Scalar(0, 255, 0));
 	}
 
-	cv::imwrite("./ssd-result.jpg", img0);
-	cv::imshow("ZQCNN-SSD", img0);
+	cv::imwrite("./ssd-result.jpg", img1);
+	cv::imshow("ZQCNN-SSD", img1);
 	cv::waitKey(0);
 
 	return EXIT_SUCCESS;

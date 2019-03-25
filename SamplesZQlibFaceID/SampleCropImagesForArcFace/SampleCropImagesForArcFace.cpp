@@ -1,7 +1,17 @@
+#if defined(_WIN32)
 #include "ZQ_FaceDatabaseMaker.h"
 #include "ZQ_FaceRecognizerArcFaceZQCNN.h"
 #include "ZQ_FaceDetectorMTCNN.h"
-#include <cblas.h>
+#include "ZQ_CNN_CompileConfig.h"
+#if ZQ_CNN_USE_BLAS_GEMM
+#include <openblas\cblas.h>
+#pragma comment(lib,"libopenblas.lib")
+#elif ZQ_CNN_USE_MKL_GEMM
+#include <mkl\mkl.h>
+#pragma comment(lib,"mklml.lib")
+#else
+#pragma comment(lib,"ZQ_GEMM.lib")
+#endif
 using namespace std;
 using namespace ZQ;
 
@@ -15,7 +25,7 @@ bool CropImagesForDatabase(const std::string& src_fold, const std::string& dst_f
 	for (int i = 0; i < real_num_threads; i++)
 	{
 		detectors[i].Init();
-		detectors[i].SetThresh(0.5, 0.5, 0.5, 0.6, 0.7, 0.7);
+		detectors[i].SetThresh(0.5, 0.5, 0.5, 0.6, 0.8, 0.95);
 	}
 
 	std::vector<ZQ_FaceDetector*> ptr_detectors(real_num_threads);
@@ -25,7 +35,7 @@ bool CropImagesForDatabase(const std::string& src_fold, const std::string& dst_f
 		ptr_detectors[i] = &detectors[i];
 		ptr_recognizers[i] = &recognizers[i];
 	}
-	return ZQ_FaceDatabaseMaker::CropImagesForDatabase(ptr_detectors, ptr_recognizers, src_fold, dst_fold, real_num_threads, strict_check);
+	return ZQ_FaceDatabaseMaker::CropImagesForDatabase(ptr_detectors, ptr_recognizers, src_fold, dst_fold, real_num_threads, strict_check, "err_log.txt", false);
 }
 
 int main(int argc, const char** argv)
@@ -36,7 +46,11 @@ int main(int argc, const char** argv)
 		std::cout << "Use: " << std::string(argv[0]) << " src_root dst_root [max_thread_num] [strict_check(0/1)]\n";
 		return EXIT_FAILURE;
 	}
+#if ZQ_CNN_USE_BLAS_GEMM
 	openblas_set_num_threads(1);
+#elif ZQ_CNN_USE_MKL_GEMM
+	mkl_set_num_threads(1);
+#endif
 	int max_thread_num = 32;
 	bool strict_check = false;
 	if (argc > 3)
@@ -49,3 +63,12 @@ int main(int argc, const char** argv)
 	}
 	return EXIT_SUCCESS;
 }
+
+#else
+#include <stdio.h>
+int main(int argc, const char** argv)
+{
+	printf("%s only support windows\n", argv[0]);
+	return 0;
+}
+#endif

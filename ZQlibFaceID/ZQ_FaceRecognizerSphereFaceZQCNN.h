@@ -72,13 +72,20 @@ namespace ZQ
 					feat_dim = 0;
 					return false;
 				}
-
+				
 				int C, H, W;
 				net.GetInputDim(C, H, W);
 				ZQ_CNN_Tensor4D_NHW_C_Align128bit input;
 				input.ChangeSize(1, H, W, C, 0, 0);
-				net.Forward(input);
+				
+				if (!net.Forward(input))
+				{
+					printf("failed to forward\n");
+					return false;
+				}
 				const ZQ_CNN_Tensor4D* out = net.GetBlobByName(output_blob_name);
+				if (out == NULL)
+					return false;
 				feat_dim = out->GetC();
 				return true;
 			}
@@ -108,10 +115,10 @@ namespace ZQ
 						cur_pix_ptr[2] = ori_pix_ptr[0];
 					}
 				}
-				input.ConvertFromBGR(&bgr_buffer[0], crop_width, crop_height, crop_width * 3, 127.5f, 0.0078125f);
+				input.ConvertFromBGR(&bgr_buffer[0], crop_width, crop_height, crop_width * 3, mean_val, std_val);
 				break;
 			case ZQ_PIXEL_FMT_BGR:
-				input.ConvertFromBGR(img, crop_width, crop_height, widthStep, 127.5f, 0.0078125f);
+				input.ConvertFromBGR(img, crop_width, crop_height, widthStep, mean_val, std_val);
 				break;
 			case ZQ_PIXEL_FMT_RGB:
 				for (int h = 0; h < crop_height; h++)
@@ -125,7 +132,7 @@ namespace ZQ
 						cur_pix_ptr[2] = ori_pix_ptr[0];
 					}
 				}
-				input.ConvertFromBGR(&bgr_buffer[0], crop_width, crop_height, crop_width * 3, 127.5f, 0.0078125f);
+				input.ConvertFromBGR(&bgr_buffer[0], crop_width, crop_height, crop_width * 3, mean_val, std_val);
 				break;
 			case ZQ_PIXEL_FMT_BGRX:
 				for (int h = 0; h < crop_height; h++)
@@ -139,7 +146,7 @@ namespace ZQ
 						cur_pix_ptr[2] = ori_pix_ptr[2];
 					}
 				}
-				input.ConvertFromBGR(&bgr_buffer[0], crop_width, crop_height, crop_width * 3, 127.5f, 0.0078125f);
+				input.ConvertFromBGR(&bgr_buffer[0], crop_width, crop_height, crop_width * 3, mean_val, std_val);
 				break;
 			case ZQ_PIXEL_FMT_RGBX:
 				for (int h = 0; h < crop_height; h++)
@@ -153,7 +160,7 @@ namespace ZQ
 						cur_pix_ptr[2] = ori_pix_ptr[0];
 					}
 				}
-				input.ConvertFromBGR(&bgr_buffer[0], crop_width, crop_height, crop_width * 3, 127.5f, 0.0078125f);
+				input.ConvertFromBGR(&bgr_buffer[0], crop_width, crop_height, crop_width * 3, mean_val, std_val);
 				break;
 			case ZQ_PIXEL_FMT_XBGR:
 				for (int h = 0; h < crop_height; h++)
@@ -167,7 +174,7 @@ namespace ZQ
 						cur_pix_ptr[2] = ori_pix_ptr[3];
 					}
 				}
-				input.ConvertFromBGR(&bgr_buffer[0], crop_width, crop_height, crop_width * 3, 127.5f, 0.0078125f);
+				input.ConvertFromBGR(&bgr_buffer[0], crop_width, crop_height, crop_width * 3, mean_val, std_val);
 				break;
 			case ZQ_PIXEL_FMT_XRGB:
 				for (int h = 0; h < crop_height; h++)
@@ -181,7 +188,7 @@ namespace ZQ
 						cur_pix_ptr[2] = ori_pix_ptr[1];
 					}
 				}
-				input.ConvertFromBGR(&bgr_buffer[0], crop_width, crop_height, crop_width * 3, 127.5f, 0.0078125f);
+				input.ConvertFromBGR(&bgr_buffer[0], crop_width, crop_height, crop_width * 3, mean_val, std_val);
 				break;
 			default:
 				return false;
@@ -199,6 +206,10 @@ namespace ZQ
 		}
 
 	private:
+
+		const float mean_val = 127.5f;
+		const float std_val = 0.0078125f;
+
 		ZQ_CNN_Tensor4D_NHW_C_Align128bit input;
 		std::vector<unsigned char> bgr_buffer;
 		ZQ_CNN_Net net;

@@ -50,6 +50,10 @@
     <PlatformToolset>v140</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
+    <UseIntelTBB>false</UseIntelTBB>
+    <UseIntelMKL>No</UseIntelMKL>
+    <UseILP64Interfaces>false</UseILP64Interfaces>
+    <InstrumentIntelTBB>false</InstrumentIntelTBB>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -103,7 +107,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(SolutionDir)3rdparty\include\openblas;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)3rdparty\include;$(SolutionDir)ZQ_GEMM;$(SolutionDir)ZQCNN;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
     </ClCompile>
@@ -142,10 +146,17 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(SolutionDir)3rdparty\include\openblas;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)3rdparty\include;$(SolutionDir)ZQ_GEMM;$(SolutionDir)ZQCNN;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
-      <EnableEnhancedInstructionSet>AdvancedVectorExtensions</EnableEnhancedInstructionSet>
+      <EnableEnhancedInstructionSet>AdvancedVectorExtensions2</EnableEnhancedInstructionSet>
       <OpenMPSupport>true</OpenMPSupport>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <ControlFlowGuard>false</ControlFlowGuard>
+      <FloatingPointExceptions>false</FloatingPointExceptions>
+      <CreateHotpatchableImage>false</CreateHotpatchableImage>
+      <DebugInformationFormat>None</DebugInformationFormat>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -174,6 +185,8 @@
     <ClCompile Include="layers_c\zq_cnn_resize_32f_align_c.c" />
     <ClCompile Include="layers_c\zq_cnn_scalaroperation_32f_align_c.c" />
     <ClCompile Include="layers_c\zq_cnn_softmax_32f_align_c.c" />
+    <ClCompile Include="layers_c\zq_cnn_sqrt_32f_align_c.c" />
+    <ClCompile Include="layers_c\zq_cnn_reduction_32f_align_c.c" />
     <ClCompile Include="math\zq_avx_mathfun.c" />
     <ClCompile Include="math\zq_sse_mathfun.c" />
     <ClCompile Include="ZQ_CNN_Forward_SSEUtils.cpp" />
@@ -214,14 +227,19 @@
     <ClInclude Include="layers_c\zq_cnn_scalaroperation_32f_align_c_raw.h" />
     <ClInclude Include="layers_c\zq_cnn_softmax_32f_align_c.h" />
     <ClInclude Include="layers_c\zq_cnn_softmax_32f_align_c_raw.h" />
+    <ClInclude Include="layers_c\zq_cnn_sqrt_32f_align_c.h" />
+    <ClInclude Include="layers_c\zq_cnn_reduction_32f_align_c.h" />
     <ClInclude Include="math\zq_avx_mathfun.h" />
     <ClInclude Include="math\zq_sse_mathfun.h" />
     <ClInclude Include="ZQ_CNN_BBox.h" />
     <ClInclude Include="ZQ_CNN_BBoxUtils.h" />
+    <ClInclude Include="ZQ_CNN_CompileConfig.h" />
     <ClInclude Include="ZQ_CNN_Defines.h" />
     <ClInclude Include="ZQ_CNN_DetectorInterface.h" />
     <ClInclude Include="ZQ_CNN_Forward_SSEUtils.h" />
     <ClInclude Include="ZQ_CNN_Layer.h" />
+    <ClInclude Include="ZQ_CNN_MouthDetector.h" />
+    <ClInclude Include="ZQ_CNN_MTCNN_old.h" />
     <ClInclude Include="ZQ_CNN_MTCNN.h" />
     <ClInclude Include="ZQ_CNN_Net.h" />
     <ClInclude Include="ZQ_CNN_NSFW.h" />

@@ -1,8 +1,17 @@
 #include "ZQ_CNN_Net.h"
-#include <cblas.h>
 #include <vector>
 #include <iostream>
-#include "opencv2\opencv.hpp"
+#include "opencv2/opencv.hpp"
+#include "ZQ_CNN_CompileConfig.h"
+#if ZQ_CNN_USE_BLAS_GEMM
+#include <openblas/cblas.h>
+#pragma comment(lib,"libopenblas.lib")
+#elif ZQ_CNN_USE_MKL_GEMM
+#include <mkl/mkl.h>
+#pragma comment(lib,"mklml.lib")
+#else
+#pragma comment(lib,"ZQ_GEMM.lib")
+#endif
 using namespace ZQ;
 using namespace std;
 using namespace cv;
@@ -10,10 +19,14 @@ using namespace cv;
 
 int main()
 {
+#if ZQ_CNN_USE_BLAS_GEMM
 	openblas_set_num_threads(1);
+#elif ZQ_CNN_USE_MKL_GEMM
+	mkl_set_num_threads(1);
+#endif
 	for (int out_it = 0; out_it < 1; out_it++)
 	{
-		Mat image0 = cv::imread("data\\00011.jpg", 0);
+		Mat image0 = cv::imread("data/00011.jpg", 0);
 		if (image0.empty())
 		{
 			cout << "empty image\n";
@@ -26,7 +39,7 @@ int main()
 
 
 		ZQ_CNN_Net net;
-		if (!net.LoadFrom("model\\FacialNet.zqparam", "model\\FacialNet.nchwbin"))
+		if (!net.LoadFrom("model/FacialNet.zqparam", "model/FacialNet.nchwbin"))
 		{
 			cout << "failed to load net\n";
 			return EXIT_FAILURE;

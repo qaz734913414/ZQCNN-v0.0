@@ -1,12 +1,26 @@
+#if defined(_WIN32)
 #include "ZQ_FaceRecognizerSphereFaceZQCNN.h"
-#include <cblas.h>
+#include "ZQ_CNN_CompileConfig.h"
+#if ZQ_CNN_USE_BLAS_GEMM
+#include <openblas\cblas.h>
+#pragma comment(lib,"libopenblas.lib")
+#elif ZQ_CNN_USE_MKL_GEMM
+#include <mkl\mkl.h>
+#pragma comment(lib,"mklml.lib")
+#else
+#pragma comment(lib,"ZQ_GEMM.lib")
+#endif
 using namespace ZQ;
 using namespace cv;
 using namespace std;
 
 int main()
 {
+#if ZQ_CNN_USE_BLAS_GEMM
 	openblas_set_num_threads(1);
+#elif ZQ_CNN_USE_MKL_GEMM
+	mkl_set_num_threads(1);
+#endif
 	ZQ_FaceRecognizer* recognizer[3] = { 0 };
 	std::string model_name[3] = {
 		"04bn256","06bn512","mobile-10bn512"
@@ -32,12 +46,11 @@ int main()
 		return EXIT_FAILURE;
 	}
 
-	Mat img0 = imread("data\\00.jpg");
-	Mat img1 = imread("data\\01.jpg");
+	Mat img0 = imread("data/00.jpg");
+	Mat img1 = imread("data/01.jpg");
 
 	for (int it = 0; it < 10; it++)
 	{
-
 		for (int i = 0; i < 3; i++)
 		{
 			int feat_dim = recognizer[i]->GetFeatDim();
@@ -54,3 +67,12 @@ int main()
 	}
 	return EXIT_SUCCESS;
 }
+
+#else
+#include <stdio.h>
+int main(int argc, const char** argv)
+{
+	printf("%s only support windows\n", argv[0]);
+	return 0;
+}
+#endif

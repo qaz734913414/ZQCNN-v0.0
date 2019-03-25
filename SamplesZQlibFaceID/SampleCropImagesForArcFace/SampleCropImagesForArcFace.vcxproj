@@ -103,13 +103,13 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(SolutionDir)ZQlibFaceID;$(SolutionDir)3rdparty\opencv\build\include;$(SolutionDir)3rdparty\include\ZQlib;$(SolutionDir)ZQCNN;$(SolutionDir)3rdparty\include\openblas;$(SolutionDir)3rdparty\include\mini-caffe</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)ZQlibFaceID;$(SolutionDir)3rdparty\opencv\build\include;$(SolutionDir)3rdparty\include\ZQlib;$(SolutionDir)ZQCNN;$(SolutionDir)3rdparty\include;$(SolutionDir)3rdparty\include\mini-caffe</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)3rdparty\opencv\build\x64\vc14\lib;$(OutDir);$(SolutionDir)3rdparty\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opencv_world310d.lib;ZQCNN.lib;libopenblas.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opencv_world342d.lib;ZQCNN.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -140,7 +140,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(SolutionDir)ZQlibFaceID;$(SolutionDir)3rdparty\opencv\build\include;$(SolutionDir)3rdparty\include\ZQlib;$(SolutionDir)ZQCNN;$(SolutionDir)3rdparty\include\openblas;$(SolutionDir)3rdparty\include\mini-caffe</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)ZQlibFaceID;$(SolutionDir)3rdparty\opencv\build\include;$(SolutionDir)3rdparty\include\ZQlib;$(SolutionDir)ZQCNN;$(SolutionDir)3rdparty\include;$(SolutionDir)3rdparty\include\mini-caffe</AdditionalIncludeDirectories>
       <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
@@ -149,7 +149,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)3rdparty\opencv\build\x64\vc14\lib;$(OutDir);$(SolutionDir)3rdparty\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opencv_world310.lib;ZQCNN.lib;libopenblas.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opencv_world342.lib;ZQCNN.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

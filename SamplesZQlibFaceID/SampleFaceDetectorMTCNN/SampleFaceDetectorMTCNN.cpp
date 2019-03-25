@@ -1,6 +1,17 @@
+#if defined(_WIN32)
 #include "ZQ_FaceDetectorMTCNN.h"
 #include "opencv2\opencv.hpp"
 #include <iostream>
+#include "ZQ_CNN_CompileConfig.h"
+#if ZQ_CNN_USE_BLAS_GEMM
+#include <openblas\cblas.h>
+#pragma comment(lib,"libopenblas.lib")
+#elif ZQ_CNN_USE_MKL_GEMM
+#include <mkl\mkl.h>
+#pragma comment(lib,"mklml.lib")
+#else
+#pragma comment(lib,"ZQ_GEMM.lib")
+#endif
 
 using namespace std;
 using namespace cv;
@@ -34,21 +45,33 @@ void Draw(cv::Mat &image, const std::vector<ZQ_CNN_BBox>& thirdBbox)
 
 int main()
 {
+#if ZQ_CNN_USE_BLAS_GEMM
+	openblas_set_num_threads(1);
+#elif ZQ_CNN_USE_MKL_GEMM
+	mkl_set_num_threads(1);
+#endif
 	ZQ_FaceDetector* mtcnn = new ZQ_FaceDetectorMTCNN();
-	if (!mtcnn->Init())
+	if (!mtcnn->Init("model",8))
 	{
 		cout << "failed to init mtcnn\n";
 		return EXIT_FAILURE;
 	}
 	
-	Mat img = imread("data\\4.jpg");
+	Mat img = imread("data/4.jpg");
 	vector<ZQ_CNN_BBox> result_mtcnn;
-	if (!mtcnn->FindFaceROI(img.data, img.cols, img.rows, img.step[0], ZQ_PIXEL_FMT_BGR, 
-		0.1, 0.1, 0.9, 0.9, 40, 0.709, result_mtcnn))
+	int iters = 1000;
+	double t1 = omp_get_wtime();
+	for (int i = 0; i < iters; i++)
 	{
-		cout << "failed to find face using MTCNN\n";
-		return EXIT_FAILURE;
+		if (!mtcnn->FindFaceROI(img.data, img.cols, img.rows, img.step[0], ZQ_PIXEL_FMT_BGR,
+			0.1, 0.1, 0.9, 0.9, 40, 0.709, result_mtcnn))
+		{
+			cout << "failed to find face using MTCNN\n";
+			return EXIT_FAILURE;
+		}
 	}
+	double t2 = omp_get_wtime();
+	printf("%d iters cost %.3f secs, 1 iter costs %.3f ms\n", iters, t2 - t1, 1000 * (t2 - t1) / iters);
 	
 	Mat draw_mtcnn;
 	img.copyTo(draw_mtcnn);
@@ -59,3 +82,12 @@ int main()
 	delete mtcnn;
 	return EXIT_SUCCESS;
 }
+
+#else
+#include <stdio.h>
+int main(int argc, const char** argv)
+{
+	printf("%s only support windows\n", argv[0]);
+	return 0;
+}
+#endif

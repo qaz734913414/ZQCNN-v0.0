@@ -3,6 +3,9 @@
 #pragma once
 
 #include "ZQ_CNN_BBox.h"
+#include <string>
+#include <math.h>
+#include <stdlib.h>
 #include <algorithm>
 
 namespace ZQ
@@ -22,13 +25,15 @@ namespace ZQ
 			return lsh.score < rsh.score;
 		}
 
-		static void _nms(std::vector<ZQ_CNN_BBox> &boundingBox, std::vector<ZQ_CNN_OrderScore> &bboxScore, const float overlap_threshold, const std::string& modelname = "Union")
+		static void _nms(std::vector<ZQ_CNN_BBox> &boundingBox, std::vector<ZQ_CNN_OrderScore> &bboxScore, const float overlap_threshold, 
+			const std::string& modelname = "Union", int overlap_count_thresh = 0, int thread_num = 1)
 		{
-			if (boundingBox.empty())
+			if (boundingBox.empty() || overlap_threshold >= 1.0)
 			{
 				return;
 			}
 			std::vector<int> heros;
+			std::vector<int> overlap_num;
 			//sort the score
 			sort(bboxScore.begin(), bboxScore.end(), _cmp_score);
 
@@ -44,45 +49,99 @@ namespace ZQ
 				bboxScore.pop_back();
 				if (order < 0)continue;
 				heros.push_back(order);
-				boundingBox.at(order).exist = false;//delete it
-
-				for (int num = 0; num < boundingBox.size(); num++)
+				int cur_overlap = 0;
+				boundingBox[order].exist = false;//delete it
+				int box_num = boundingBox.size();
+				if (thread_num == 1)
 				{
-					if (boundingBox.at(num).exist)
+					for (int num = 0; num < box_num; num++)
 					{
-						//the iou
-						maxX = (boundingBox.at(num).row1 > boundingBox.at(order).row1) ? boundingBox.at(num).row1 : boundingBox.at(order).row1;
-						maxY = (boundingBox.at(num).col1 > boundingBox.at(order).col1) ? boundingBox.at(num).col1 : boundingBox.at(order).col1;
-						minX = (boundingBox.at(num).row2 < boundingBox.at(order).row2) ? boundingBox.at(num).row2 : boundingBox.at(order).row2;
-						minY = (boundingBox.at(num).col2 < boundingBox.at(order).col2) ? boundingBox.at(num).col2 : boundingBox.at(order).col2;
-						//maxX1 and maxY1 reuse 
-						maxX = ((minX - maxX + 1) > 0) ? (minX - maxX + 1) : 0;
-						maxY = ((minY - maxY + 1) > 0) ? (minY - maxY + 1) : 0;
-						//IOU reuse for the area of two bbox
-						IOU = maxX * maxY;
-						if (!modelname.compare("Union"))
-							IOU = IOU / (boundingBox.at(num).area + boundingBox.at(order).area - IOU);
-						else if (!modelname.compare("Min"))
+						if (boundingBox[num].exist)
 						{
-							IOU = IOU / ((boundingBox.at(num).area < boundingBox.at(order).area) ? boundingBox.at(num).area : boundingBox.at(order).area);
-						}
-						if (IOU > overlap_threshold)
-						{
-							boundingBox.at(num).exist = false;
-							for (std::vector<ZQ_CNN_OrderScore>::iterator it = bboxScore.begin(); it != bboxScore.end(); it++)
+							//the iou
+							maxY = __max(boundingBox[num].row1, boundingBox[order].row1);
+							maxX = __max(boundingBox[num].col1, boundingBox[order].col1);
+							minY = __min(boundingBox[num].row2, boundingBox[order].row2);
+							minX = __min(boundingBox[num].col2, boundingBox[order].col2);
+							//maxX1 and maxY1 reuse 
+							maxX = __max(minX - maxX + 1, 0);
+							maxY = __max(minY - maxY + 1, 0);
+							//IOU reuse for the area of two bbox
+							IOU = maxX * maxY;
+							float area1 = boundingBox[num].area;
+							float area2 = boundingBox[order].area;
+							if (!modelname.compare("Union"))
+								IOU = IOU / (area1 + area2 - IOU);
+							else if (!modelname.compare("Min"))
 							{
-								if ((*it).oriOrder == num)
+								IOU = IOU / __min(area1, area2);
+							}
+							if (IOU > overlap_threshold)
+							{
+								cur_overlap++;
+								boundingBox[num].exist = false;
+								for (std::vector<ZQ_CNN_OrderScore>::iterator it = bboxScore.begin(); it != bboxScore.end(); it++)
 								{
-									(*it).oriOrder = -1;
-									break;
+									if ((*it).oriOrder == num)
+									{
+										(*it).oriOrder = -1;
+										break;
+									}
 								}
 							}
 						}
 					}
 				}
+				else
+				{
+					int chunk_size = ceil(box_num / thread_num);
+#pragma omp parallel for schedule(static, chunk_size) num_threads(thread_num)
+					for (int num = 0; num < box_num; num++)
+					{
+						if (boundingBox.at(num).exist)
+						{
+							//the iou
+							maxY = __max(boundingBox[num].row1, boundingBox[order].row1);
+							maxX = __max(boundingBox[num].col1, boundingBox[order].col1);
+							minY = __min(boundingBox[num].row2, boundingBox[order].row2);
+							minX = __min(boundingBox[num].col2, boundingBox[order].col2);
+							//maxX1 and maxY1 reuse 
+							maxX = __max(minX - maxX + 1, 0);
+							maxY = __max(minY - maxY + 1, 0);
+							//IOU reuse for the area of two bbox
+							IOU = maxX * maxY;
+							float area1 = boundingBox[num].area;
+							float area2 = boundingBox[order].area;
+							if (!modelname.compare("Union"))
+								IOU = IOU / (area1 + area2 - IOU);
+							else if (!modelname.compare("Min"))
+							{
+								IOU = IOU / __min(area1, area2);
+							}
+							if (IOU > overlap_threshold)
+							{
+								cur_overlap++;
+								boundingBox.at(num).exist = false;
+								for (std::vector<ZQ_CNN_OrderScore>::iterator it = bboxScore.begin(); it != bboxScore.end(); it++)
+								{
+									if ((*it).oriOrder == num)
+									{
+										(*it).oriOrder = -1;
+										break;
+									}
+								}
+							}
+						}
+					}
+				}
+				overlap_num.push_back(cur_overlap);
 			}
 			for (int i = 0; i < heros.size(); i++)
-				boundingBox.at(heros.at(i)).exist = true;
+			{
+				if(!boundingBox[heros[i]].need_check_overlap_count 
+					|| overlap_num[i] >= overlap_count_thresh)
+					boundingBox[heros[i]].exist = true;
+			}
 			//clear exist= false;
 			for (int i = boundingBox.size() - 1; i >= 0; i--)
 			{
@@ -93,9 +152,10 @@ namespace ZQ
 			}
 		}
 
-		static void _refine_and_square_bbox(std::vector<ZQ_CNN_BBox> &vecBbox, const int width, const int height)
+		static void _refine_and_square_bbox(std::vector<ZQ_CNN_BBox> &vecBbox, const int width, const int height,
+			bool square = true)
 		{
-			float bbw = 0, bbh = 0, maxSide = 0;
+			float bbw = 0, bbh = 0, bboxSize = 0;
 			float h = 0, w = 0;
 			float x1 = 0, y1 = 0, x2 = 0, y2 = 0;
 			for (std::vector<ZQ_CNN_BBox>::iterator it = vecBbox.begin(); it != vecBbox.end(); it++)
@@ -104,27 +164,68 @@ namespace ZQ
 				{
 					bbh = (*it).row2 - (*it).row1 + 1;
 					bbw = (*it).col2 - (*it).col1 + 1;
-					x1 = (*it).row1 + (*it).regreCoord[1] * bbh;
-					y1 = (*it).col1 + (*it).regreCoord[0] * bbw;
-					x2 = (*it).row2 + (*it).regreCoord[3] * bbh;
-					y2 = (*it).col2 + (*it).regreCoord[2] * bbw;
+					y1 = (*it).row1 + (*it).regreCoord[1] * bbh;
+					x1 = (*it).col1 + (*it).regreCoord[0] * bbw;
+					y2 = (*it).row2 + (*it).regreCoord[3] * bbh;
+					x2 = (*it).col2 + (*it).regreCoord[2] * bbw;
 
-					h = x2 - x1 + 1;
-					w = y2 - y1 + 1;
-
-					maxSide = (h > w) ? h : w;
-					x1 = x1 + h*0.5 - maxSide*0.5;
-					y1 = y1 + w*0.5 - maxSide*0.5;
-					(*it).row2 = round(x1 + maxSide - 1);
-					(*it).col2 = round(y1 + maxSide - 1);
-					(*it).row1 = round(x1);
-					(*it).col1 = round(y1);
+					w = x2 - x1 + 1;
+					h = y2 - y1 + 1;
+					if (square)
+					{
+						bboxSize = (h > w) ? h : w;
+						y1 = y1 + h*0.5 - bboxSize*0.5;
+						x1 = x1 + w*0.5 - bboxSize*0.5;
+						(*it).row2 = round(y1 + bboxSize - 1);
+						(*it).col2 = round(x1 + bboxSize - 1);
+						(*it).row1 = round(y1);
+						(*it).col1 = round(x1);
+					}
+					else
+					{
+						(*it).row2 = round(y1 + h - 1);
+						(*it).col2 = round(x1 + w - 1);
+						(*it).row1 = round(y1);
+						(*it).col1 = round(x1);
+					}
 
 					//boundary check
-					if ((*it).row1 < 0)(*it).row1 = 0;
+					/*if ((*it).row1 < 0)(*it).row1 = 0;
 					if ((*it).col1 < 0)(*it).col1 = 0;
 					if ((*it).row2 > height)(*it).row2 = height - 1;
-					if ((*it).col2 > width)(*it).col2 = width - 1;
+					if ((*it).col2 > width)(*it).col2 = width - 1;*/
+
+					it->area = (it->row2 - it->row1)*(it->col2 - it->col1);
+				}
+			}
+		}
+
+		static void _square_bbox(std::vector<ZQ_CNN_BBox> &vecBbox, const int width, const int height)
+		{
+			float bbw = 0, bbh = 0, bboxSize = 0;
+			float h = 0, w = 0;
+			float x1 = 0, y1 = 0, x2 = 0, y2 = 0;
+			for (std::vector<ZQ_CNN_BBox>::iterator it = vecBbox.begin(); it != vecBbox.end(); it++)
+			{
+				if ((*it).exist)
+				{
+					y1 = (*it).row1;
+					x1 = (*it).col1;
+					h = (*it).row2 - (*it).row1 + 1;
+					w = (*it).col2 - (*it).col1 + 1;
+					bboxSize = (h > w) ? h : w;
+					y1 = y1 + h*0.5 - bboxSize*0.5;
+					x1 = x1 + w*0.5 - bboxSize*0.5;
+					(*it).row2 = round(y1 + bboxSize - 1);
+					(*it).col2 = round(x1 + bboxSize - 1);
+					(*it).row1 = round(y1);
+					(*it).col1 = round(x1);
+
+					//boundary check
+					/*if ((*it).row1 < 0)(*it).row1 = 0;
+					if ((*it).col1 < 0)(*it).col1 = 0;
+					if ((*it).row2 > height)(*it).row2 = height - 1;
+					if ((*it).col2 > width)(*it).col2 = width - 1;*/
 
 					it->area = (it->row2 - it->row1)*(it->col2 - it->col1);
 				}
@@ -338,10 +439,10 @@ namespace ZQ
 
 		static void ClipBBox(const ZQ_CNN_NormalizedBBox& bbox, ZQ_CNN_NormalizedBBox* clip_bbox) 
 		{
-			clip_bbox->col1 = std::max(std::min(bbox.col1, 1.f), 0.f);
-			clip_bbox->row1 = std::max(std::min(bbox.row1, 1.f), 0.f);
-			clip_bbox->col2 = std::max(std::min(bbox.col2, 1.f), 0.f);
-			clip_bbox->row2 = std::max(std::min(bbox.row2, 1.f), 0.f);
+			clip_bbox->col1 = __max(__min(bbox.col1, 1.f), 0.f);
+			clip_bbox->row1 = __max(__min(bbox.row1, 1.f), 0.f);
+			clip_bbox->col2 = __max(__min(bbox.col2, 1.f), 0.f);
+			clip_bbox->row2 = __max(__min(bbox.row2, 1.f), 0.f);
 			clip_bbox->size = BBoxSize(*clip_bbox, true);
 			clip_bbox->difficult = bbox.difficult;
 		}
@@ -379,6 +480,33 @@ namespace ZQ
 				loc_data += num_preds_per_class * num_loc_classes * 4;
 			}
 			return true;
+		}
+
+		static void TransformLocations_MXNET(float *out, const float *anchors,
+			const float *loc_pred, const bool clip,
+			const float vx, const float vy,	const float vw, const float vh) 
+		{
+			// transform predictions to detection results
+			float al = anchors[0];
+			float at = anchors[1];
+			float ar = anchors[2];
+			float ab = anchors[3];
+			float aw = ar - al;
+			float ah = ab - at;
+			float ax = (al + ar) / 2.f;
+			float ay = (at + ab) / 2.f;
+			float px = loc_pred[0];
+			float py = loc_pred[1];
+			float pw = loc_pred[2];
+			float ph = loc_pred[3];
+			float ox = px * vx * aw + ax;
+			float oy = py * vy * ah + ay;
+			float ow = exp(pw * vw) * aw / 2;
+			float oh = exp(ph * vh) * ah / 2;
+			out[0] = clip ? __max(0, __min(1, ox - ow)) : (ox - ow);
+			out[1] = clip ? __max(0, __min(1, oy - oh)) : (oy - oh);
+			out[2] = clip ? __max(0, __min(1, ox + ow)) : (ox + ow);
+			out[3] = clip ? __max(0, __min(1, oy + oh)) : (oy + oh);
 		}
 
 		static void GetConfidenceScores(const float* conf_data, const int num,
@@ -584,10 +712,10 @@ namespace ZQ
 			}
 			else 
 			{
-				intersect_bbox->col1 = std::max(bbox1.col1, bbox2.col1);
-				intersect_bbox->row1 = std::max(bbox1.row1, bbox2.row1);
-				intersect_bbox->col2 = std::min(bbox1.col2, bbox2.col2);
-				intersect_bbox->row2 = std::min(bbox1.row2, bbox2.row2);
+				intersect_bbox->col1 = __max(bbox1.col1, bbox2.col1);
+				intersect_bbox->row1 = __max(bbox1.row1, bbox2.row1);
+				intersect_bbox->col2 = __min(bbox1.col2, bbox2.col2);
+				intersect_bbox->row2 = __min(bbox1.row2, bbox2.row2);
 			}
 		}
 	};
