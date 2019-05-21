@@ -1,3 +1,4 @@
+
 #define op_1x1 \
 	a_vec1 = zq_mm_load_ps(A_c_ptr1);\
 	b_vec1 = zq_mm_load_ps(B_c_ptr1);\
@@ -1785,6 +1786,149 @@
 	q.p[0] = _mm_add_ps(q.p[0],q.p[1]);\
 	*(C_c_ptrG++) = zq_final_sum_q0_4
 
+#elif __ARM_NEON && __ARM_NEON_ARMV8
+
+#define store_1x1 \
+	*(C_c_ptr1++) = vaddvq_f32(sum_vec11)
+
+#define store_1x2 \
+	*(C_c_ptr1++) = vaddvq_f32(sum_vec11);\
+	*(C_c_ptr1++) = vaddvq_f32(sum_vec12)
+
+#define store_1x4 \
+	*(C_c_ptr1++) = vaddvq_f32(sum_vec11);\
+	*(C_c_ptr1++) = vaddvq_f32(sum_vec12);\
+	*(C_c_ptr1++) = vaddvq_f32(sum_vec13);\
+	*(C_c_ptr1++) = vaddvq_f32(sum_vec14)
+
+#define store_1x8 \
+	*(C_c_ptr1++) = vaddvq_f32(sum_vec11);\
+	*(C_c_ptr1++) = vaddvq_f32(sum_vec12);\
+	*(C_c_ptr1++) = vaddvq_f32(sum_vec13);\
+	*(C_c_ptr1++) = vaddvq_f32(sum_vec14);\
+	*(C_c_ptr1++) = vaddvq_f32(sum_vec15);\
+	*(C_c_ptr1++) = vaddvq_f32(sum_vec16);\
+	*(C_c_ptr1++) = vaddvq_f32(sum_vec17);\
+	*(C_c_ptr1++) = vaddvq_f32(sum_vec18)
+
+#define store_2x1 \
+	*(C_c_ptr1++) = vaddvq_f32(sum_vec11);\
+	*(C_c_ptr2++) = vaddvq_f32(sum_vec21)
+
+#define store_2x2 \
+	*(C_c_ptr1++) = vaddvq_f32(sum_vec11);\
+	*(C_c_ptr1++) = vaddvq_f32(sum_vec12);\
+	*(C_c_ptr2++) = vaddvq_f32(sum_vec21);\
+	*(C_c_ptr2++) = vaddvq_f32(sum_vec22)
+
+#define store_2x4 \
+	*(C_c_ptr1++) = vaddvq_f32(sum_vec11);\
+	*(C_c_ptr1++) = vaddvq_f32(sum_vec12);\
+	*(C_c_ptr1++) = vaddvq_f32(sum_vec13);\
+	*(C_c_ptr1++) = vaddvq_f32(sum_vec14);\
+	*(C_c_ptr2++) = vaddvq_f32(sum_vec21);\
+	*(C_c_ptr2++) = vaddvq_f32(sum_vec22);\
+	*(C_c_ptr2++) = vaddvq_f32(sum_vec23);\
+	*(C_c_ptr2++) = vaddvq_f32(sum_vec24)
+
+#define store_2x8 \
+	*(C_c_ptr1++) = vaddvq_f32(sum_vec11);\
+	*(C_c_ptr1++) = vaddvq_f32(sum_vec12);\
+	*(C_c_ptr1++) = vaddvq_f32(sum_vec13);\
+	*(C_c_ptr1++) = vaddvq_f32(sum_vec14);\
+	*(C_c_ptr1++) = vaddvq_f32(sum_vec15);\
+	*(C_c_ptr1++) = vaddvq_f32(sum_vec16);\
+	*(C_c_ptr1++) = vaddvq_f32(sum_vec17);\
+	*(C_c_ptr1++) = vaddvq_f32(sum_vec18);\
+	*(C_c_ptr2++) = vaddvq_f32(sum_vec21);\
+	*(C_c_ptr2++) = vaddvq_f32(sum_vec22);\
+	*(C_c_ptr2++) = vaddvq_f32(sum_vec23);\
+	*(C_c_ptr2++) = vaddvq_f32(sum_vec24);\
+	*(C_c_ptr2++) = vaddvq_f32(sum_vec25);\
+	*(C_c_ptr2++) = vaddvq_f32(sum_vec26);\
+	*(C_c_ptr2++) = vaddvq_f32(sum_vec27);\
+	*(C_c_ptr2++) = vaddvq_f32(sum_vec28)
+
+#define store_4x1 \
+	*(C_c_ptr1++) = vaddvq_f32(sum_vec11);\
+	*(C_c_ptr2++) = vaddvq_f32(sum_vec21);\
+	*(C_c_ptr3++) = vaddvq_f32(sum_vec31);\
+	*(C_c_ptr4++) = vaddvq_f32(sum_vec41)
+
+#define store_4x2 \
+	*(C_c_ptr1++) = vaddvq_f32(sum_vec11);\
+	*(C_c_ptr1++) = vaddvq_f32(sum_vec12);\
+	*(C_c_ptr2++) = vaddvq_f32(sum_vec21);\
+	*(C_c_ptr2++) = vaddvq_f32(sum_vec22);\
+	*(C_c_ptr3++) = vaddvq_f32(sum_vec31);\
+	*(C_c_ptr3++) = vaddvq_f32(sum_vec32);\
+	*(C_c_ptr4++) = vaddvq_f32(sum_vec41);\
+	*(C_c_ptr4++) = vaddvq_f32(sum_vec42)
+
+#define store_4x4 \
+	*(C_c_ptr1++) = vaddvq_f32(sum_vec11);\
+	*(C_c_ptr1++) = vaddvq_f32(sum_vec12);\
+	*(C_c_ptr1++) = vaddvq_f32(sum_vec13);\
+	*(C_c_ptr1++) = vaddvq_f32(sum_vec14);\
+	*(C_c_ptr2++) = vaddvq_f32(sum_vec21);\
+	*(C_c_ptr2++) = vaddvq_f32(sum_vec22);\
+	*(C_c_ptr2++) = vaddvq_f32(sum_vec23);\
+	*(C_c_ptr2++) = vaddvq_f32(sum_vec24);\
+	*(C_c_ptr3++) = vaddvq_f32(sum_vec31);\
+	*(C_c_ptr3++) = vaddvq_f32(sum_vec32);\
+	*(C_c_ptr3++) = vaddvq_f32(sum_vec33);\
+	*(C_c_ptr3++) = vaddvq_f32(sum_vec34);\
+	*(C_c_ptr4++) = vaddvq_f32(sum_vec41);\
+	*(C_c_ptr4++) = vaddvq_f32(sum_vec42);\
+	*(C_c_ptr4++) = vaddvq_f32(sum_vec43);\
+	*(C_c_ptr4++) = vaddvq_f32(sum_vec44)
+
+#define store_8x1 \
+	*(C_c_ptr1++) = vaddvq_f32(sum_vec11);\
+	*(C_c_ptr2++) = vaddvq_f32(sum_vec21);\
+	*(C_c_ptr3++) = vaddvq_f32(sum_vec31);\
+	*(C_c_ptr4++) = vaddvq_f32(sum_vec41);\
+	*(C_c_ptr5++) = vaddvq_f32(sum_vec51);\
+	*(C_c_ptr6++) = vaddvq_f32(sum_vec61);\
+	*(C_c_ptr7++) = vaddvq_f32(sum_vec71);\
+	*(C_c_ptr8++) = vaddvq_f32(sum_vec81)
+
+#define store_8x2 \
+	*(C_c_ptr1++) = vaddvq_f32(sum_vec11);\
+	*(C_c_ptr1++) = vaddvq_f32(sum_vec12);\
+	*(C_c_ptr2++) = vaddvq_f32(sum_vec21);\
+	*(C_c_ptr2++) = vaddvq_f32(sum_vec22);\
+	*(C_c_ptr3++) = vaddvq_f32(sum_vec31);\
+	*(C_c_ptr3++) = vaddvq_f32(sum_vec32);\
+	*(C_c_ptr4++) = vaddvq_f32(sum_vec41);\
+	*(C_c_ptr4++) = vaddvq_f32(sum_vec42);\
+	*(C_c_ptr5++) = vaddvq_f32(sum_vec51);\
+	*(C_c_ptr5++) = vaddvq_f32(sum_vec52);\
+	*(C_c_ptr6++) = vaddvq_f32(sum_vec61);\
+	*(C_c_ptr6++) = vaddvq_f32(sum_vec62);\
+	*(C_c_ptr7++) = vaddvq_f32(sum_vec71);\
+	*(C_c_ptr7++) = vaddvq_f32(sum_vec72);\
+	*(C_c_ptr8++) = vaddvq_f32(sum_vec81);\
+	*(C_c_ptr8++) = vaddvq_f32(sum_vec82)
+
+#define store_16x1 \
+	*(C_c_ptr1++) = vaddvq_f32(sum_vec11);\
+	*(C_c_ptr2++) = vaddvq_f32(sum_vec21);\
+	*(C_c_ptr3++) = vaddvq_f32(sum_vec31);\
+	*(C_c_ptr4++) = vaddvq_f32(sum_vec41);\
+	*(C_c_ptr5++) = vaddvq_f32(sum_vec51);\
+	*(C_c_ptr6++) = vaddvq_f32(sum_vec61);\
+	*(C_c_ptr7++) = vaddvq_f32(sum_vec71);\
+	*(C_c_ptr8++) = vaddvq_f32(sum_vec81);\
+	*(C_c_ptr9++) = vaddvq_f32(sum_vec91);\
+	*(C_c_ptrA++) = vaddvq_f32(sum_vecA1);\
+	*(C_c_ptrB++) = vaddvq_f32(sum_vecB1);\
+	*(C_c_ptrC++) = vaddvq_f32(sum_vecC1);\
+	*(C_c_ptrD++) = vaddvq_f32(sum_vecD1);\
+	*(C_c_ptrE++) = vaddvq_f32(sum_vecE1);\
+	*(C_c_ptrF++) = vaddvq_f32(sum_vecF1);\
+	*(C_c_ptrG++) = vaddvq_f32(sum_vecG1)
+
 #else
 #define store_1x1 \
 	zq_store_to_q(q.s, sum_vec11);\
@@ -2100,8 +2244,12 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_N1_Kgeneral(int M, int N, int K, const
 			{
 				op_1x1;
 			}
+#if __ARM_NEON && __ARM_NEON_ARMV8
+			*C_c_ptr1 = vaddvq_f32(sum_vec11);
+#else
 			zq_store_to_q(q.s, sum_vec11);
 			*(C_c_ptr1) = zq_final_sum_q;
+#endif
 
 			for (; k < K; k++)
 			{
@@ -2178,10 +2326,15 @@ void zq_gemm_32f_align_AnoTrans_Btrans_M1_N2_Kgeneral(int M, int N, int K, const
 			{
 				op_1x2;
 			}
+#if __ARM_NEON && __ARM_NEON_ARMV8
+			*(C_c_ptr1) = vaddvq_f32(sum_vec11);
+			*(C_c_ptr1 + 1) = vaddvq_f32(sum_vec12);
+#else
 			zq_store_to_q(q.s, sum_vec11);
 			*(C_c_ptr1) = zq_final_sum_q;
 			zq_store_to_q(q.s, sum_vec12);
 			*(C_c_ptr1 + 1) = zq_final_sum_q;
+#endif
 			for (; k < K; k++)
 			{
 				a1 = *(A_c_ptr1++);

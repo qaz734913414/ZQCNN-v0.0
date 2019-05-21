@@ -1,7 +1,6 @@
 #ifndef _ZQ_CNN_FORWARD_SSE_UTILS_H_
 #define _ZQ_CNN_FORWARD_SSE_UTILS_H_
 #pragma once
-#include "ZQ_CNN_Defines.h"
 #include "ZQ_CNN_Tensor4D.h"
 #include "ZQ_CNN_BBoxUtils.h"
 #include "ZQ_CNN_CompileConfig.h"
@@ -93,7 +92,7 @@ namespace ZQ
 			align_mode = __min(align_mode, ZQ_CNN_Tensor4D::ALIGN_0);
 #endif
 #endif
-			//align_mode = ZQ_CNN_Tensor4D::ALIGN_128bit;
+			//align_mode = ZQ_CNN_Tensor4D::ALIGN_0;
 			//output.Reset();
 
 			_convolution_nopadding(align_mode, in_firstPixelData, in_N, in_H + (padH << 1), in_W + (padW << 1), in_C, in_pixStep, in_widthStep, in_sliceStep,

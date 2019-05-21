@@ -4,7 +4,6 @@
 #include <string>
 #include <vector>
 #include <iostream>
-#include "ZQ_CNN_Defines.h"
 #include "ZQ_CNN_Tensor4D.h"
 #include "ZQ_CNN_BBoxUtils.h"
 #include "ZQ_CNN_Forward_SSEUtils.h"
@@ -2740,7 +2739,7 @@ namespace ZQ
 				void** tmp_buffer = use_buffer ? buffer : 0;
 				__int64* tmp_buffer_len = use_buffer ? buffer_len : 0;
 				bool ret = ZQ_CNN_Forward_SSEUtils::InnerProduct(*((*bottoms)[0]), *filters, *((*tops)[0]),
-					buffer,buffer_len);
+					tmp_buffer,tmp_buffer_len);
 				double t2 = omp_get_wtime();
 				last_cost_time = t2 - t1;
 				if (show_debug_info)
@@ -4388,7 +4387,7 @@ namespace ZQ
 	class ZQ_CNN_Layer_Normalize : public ZQ_CNN_Layer
 	{
 	public:
-		ZQ_CNN_Layer_Normalize():across_spatial(false),channel_shared(false), eps(1e-10){}
+		ZQ_CNN_Layer_Normalize():across_spatial(false),channel_shared(false), eps(1e-10),scale(0){}
 		~ZQ_CNN_Layer_Normalize(){
 			if (scale) delete scale;
 		}

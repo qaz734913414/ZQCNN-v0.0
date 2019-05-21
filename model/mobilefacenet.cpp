@@ -28,28 +28,45 @@
 
 int main(int argc, char** argv)
 {
-
+	int num_threads = 1;
 #if !defined(_WIN32)
 	if (argc > 1)
 	{
-		cpu_set_t mask;
-		CPU_ZERO(&mask);
-		CPU_SET(atoi(argv[1]), &mask);
-		if (sched_setaffinity(0, sizeof(mask), &mask) < 0) {
-			perror("sched_setaffinity");
+		int core_id = atoi(argv[1]);
+		if(core_id >= 0)
+		{
+			cpu_set_t mask;
+			CPU_ZERO(&mask);
+			CPU_SET(atoi(argv[1]), &mask);
+			if (sched_setaffinity(0, sizeof(mask), &mask) < 0) {
+				perror("sched_setaffinity");
+			}
 		}
 	}
-	int num_threads = 1;
+	
 	if(argc > 2)
 		num_threads = atoi(argv[2]);
+	
+#endif
+
+	static ncnn::UnlockedPoolAllocator g_blob_pool_allocator;
+	static ncnn::PoolAllocator g_workspace_pool_allocator;
+
+	ncnn::Option opt;
+	opt.lightmode = true;
+	opt.num_threads = num_threads;
+	opt.blob_allocator = &g_blob_pool_allocator;
+	opt.workspace_allocator = &g_workspace_pool_allocator;
+	ncnn::set_default_option(opt);
 	ncnn::set_cpu_powersave(0);
 	ncnn::set_omp_dynamic(0);
 	ncnn::set_omp_num_threads(num_threads);
-#endif
 
 	ncnn::Net net;
 	net.load_param("mobilefacenet.param");
 	net.load_model("mobilefacenet.bin");
+	g_blob_pool_allocator.clear();
+	g_workspace_pool_allocator.clear();
     const char* imagepath1 = "00_.jpg";
 	const char* imagepath2 = "01_.jpg";
 	cv::Mat img1 = cv::imread(imagepath1);
@@ -58,7 +75,7 @@ int main(int argc, char** argv)
 	ncnn::Mat in2 = ncnn::Mat::from_pixels_resize(img2.data, ncnn::Mat::PIXEL_BGR, img2.cols, img2.rows, 112, 112);
 
 	const float mean_vals[3] = { 127.5f, 127.5f, 127.5f };
-	const float norm_vals[3] = { 1.0 / 127.5,1.0 / 127.5,1.0 / 127.5 };
+	const float norm_vals[3] = { 1.0 / 128, 1.0 / 128,1.0 / 128 };
 	//in1.substract_mean_normalize(mean_vals, norm_vals);
 	//in2.substract_mean_normalize(mean_vals, norm_vals);
 
@@ -75,10 +92,6 @@ int main(int argc, char** argv)
 		{
 			ncnn::Extractor ex1 = net.create_extractor();
 			ncnn::Extractor ex2 = net.create_extractor();
-			ex1.set_light_mode(false);
-			ex2.set_light_mode(false);
-			ex1.set_num_threads(8);
-			ex2.set_num_threads(8);
 			ex1.input("data", in1);
 			ex1.extract("fc1", out1);
 			ex2.input("data", in2);

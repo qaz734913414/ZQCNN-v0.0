@@ -73,8 +73,6 @@ extern "C" {
 
 #else
 
-#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
-
 	/*
 	y = slope*min(0, x) + max(0, x)
 	*/
@@ -89,6 +87,8 @@ extern "C" {
 		int in_sliceStep,
 		float slope
 	);
+
+#if ZQ_CNN_USE_SSETYPE >= ZQ_CNN_SSETYPE_SSE
 
 	/*
 	y = slope*min(0,x)+max(0,x)

@@ -22,13 +22,13 @@ int main()
 	mkl_set_num_threads(1);
 #endif
 	ZQ_FaceRecognizer* recognizer[1] = { 0 };
-	std::string prototxt_file = "model/model-r50-am.zqparams";
-	std::string caffemodel_file = "model/model-r50-am.nchwbin";
+	std::string prototxt_file = "model/mobilefacenet-res2-6-10-2-dim512.zqparams";
+	std::string caffemodel_file = "model/mobilefacenet-res2-6-10-2-dim512-emore.nchwbin";
 	std::string out_blob_name = "fc5";
-	for (int i = 0; i < 1000; i++)
+	for (int i = 0; i < 1; i++)
 	{
-		std::string prototxt_file = "./model/model-r50-am.zqparams";
-		std::string caffemodel_file = "./model/model-r50-am.nchwbin";
+		std::string prototxt_file = "./model/mobilefacenet-res2-6-10-2-dim512.zqparams";
+		std::string caffemodel_file = "./model/mobilefacenet-res2-6-10-2-dim512-emore.nchwbin";
 		std::string out_blob_name = "fc5";
 		ZQ_FaceRecognizerArcFaceZQCNN* pFaceZQCNN = new ZQ_FaceRecognizerArcFaceZQCNN();
 		if (!pFaceZQCNN->Init("", prototxt_file, caffemodel_file, out_blob_name))
@@ -56,7 +56,7 @@ int main()
 	Mat img0 = imread("data/00_.jpg");
 	Mat img1 = imread("data/01_.jpg");
 	double t1 = omp_get_wtime();
-	int iters = 200;
+	int iters = 2;
 	for (int it = 0; it < iters; it++)
 	{
 		int feat_dim = recognizer[0]->GetFeatDim();

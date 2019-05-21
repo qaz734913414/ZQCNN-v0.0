@@ -171,12 +171,14 @@ extern "C" {
 			SWAP_A_Bt;
 			zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
 			handled = 1;
+			SWAP_C;
 		}
 		else if (K == 16)
 		{
 			SWAP_A_Bt;
 			zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
 			handled = 1;
+			SWAP_C;
 		}
 		else if (K == 24)
 		{
@@ -185,12 +187,14 @@ extern "C" {
 				SWAP_A_Bt;
 				zq_gemm_32f_align128bit_AnoTrans_Btrans_M2_N8(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
+				SWAP_C;
 			}
 			else
 			{
 				SWAP_A_Bt;
 				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
+				SWAP_C;
 			}
 		}
 		else if (K == 27) //3*3*3
@@ -200,18 +204,22 @@ extern "C" {
 				SWAP_A_Bt;
 				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
+				SWAP_C;
 			}
 			else if (N <= 128)
 			{
 				SWAP_A_Bt;
 				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
+				SWAP_C;
 			}
 		}
 		else if (K == 28)
 		{
+			SWAP_A_Bt;
 			zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
 			handled = 1;
+			SWAP_C;
 		}
 		else if (K == 32)
 		{
@@ -219,18 +227,21 @@ extern "C" {
 			SWAP_A_Bt;
 			zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
 			handled = 1;
+			SWAP_C;
 		}
 		else if (K == 64)
 		{
 			SWAP_A_Bt;
 			zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
 			handled = 1;
+			SWAP_C;
 		}
 		else if (K == 72) // 3*3*8
 		{
 			SWAP_A_Bt;
 			zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
 			handled = 1;
+			SWAP_C;
 		}
 
 		//back up methods
@@ -239,6 +250,7 @@ extern "C" {
 			SWAP_A_Bt;
 			zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N4(M, N, K, A, lda, Bt, ldb, C, ldc);
 			handled = 1;
+			SWAP_C;
 		}
 	}
 
@@ -259,6 +271,7 @@ extern "C" {
 				SWAP_A_Bt;
 				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N1(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
+				SWAP_C;
 			}
 		}
 		else if (K == 27) //3*3*3
@@ -268,12 +281,14 @@ extern "C" {
 				SWAP_A_Bt;
 				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N1(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
+				SWAP_C;
 			}
 			else if (N <= 128)
 			{
 				SWAP_A_Bt;
 				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N1(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
+				SWAP_C;
 			}
 		}
 		else if (K == 28)
@@ -281,6 +296,7 @@ extern "C" {
 			SWAP_A_Bt;
 			zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N1(M, N, K, A, lda, Bt, ldb, C, ldc);
 			handled = 1;
+			SWAP_C;
 		}
 		else if (K == 32)
 		{
@@ -289,6 +305,7 @@ extern "C" {
 				SWAP_A_Bt;
 				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N1(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
+				SWAP_C;
 			}
 		}
 		else if (K == 64)
@@ -298,6 +315,7 @@ extern "C" {
 				SWAP_A_Bt;
 				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N1(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
+				SWAP_C;
 			}
 		}
 		else if (K == 72) // 3*3*8
@@ -307,12 +325,14 @@ extern "C" {
 				SWAP_A_Bt;
 				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N2(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
+				SWAP_C;
 			}
 			else if (N <= 128)
 			{
 				SWAP_A_Bt;
 				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N1(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
+				SWAP_C;
 			}
 		}
 		else if (K == 128)
@@ -322,6 +342,7 @@ extern "C" {
 				SWAP_A_Bt;
 				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N1(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
+				SWAP_C;
 			}
 		}
 		else if (K == 144) // 3*3*16
@@ -331,12 +352,14 @@ extern "C" {
 				SWAP_A_Bt;
 				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N1(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
+				SWAP_C;
 			}
 			else if (N <= 128)
 			{
 				SWAP_A_Bt;
 				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N1(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
+				SWAP_C;
 			}
 		}
 		else if (K == 256)
@@ -346,6 +369,7 @@ extern "C" {
 				SWAP_A_Bt;
 				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N1(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
+				SWAP_C;
 			}
 		}
 		else if (K == 512)
@@ -355,6 +379,7 @@ extern "C" {
 				SWAP_A_Bt;
 				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N1(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
+				SWAP_C;
 			}
 		}
 		else if (K == 1024)
@@ -364,6 +389,7 @@ extern "C" {
 				SWAP_A_Bt;
 				zq_gemm_32f_align128bit_AnoTrans_Btrans_M4_N1(M, N, K, A, lda, Bt, ldb, C, ldc);
 				handled = 1;
+				SWAP_C;
 			}
 		}
 
