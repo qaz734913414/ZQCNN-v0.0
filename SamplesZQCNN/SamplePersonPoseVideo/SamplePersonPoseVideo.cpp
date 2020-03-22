@@ -32,7 +32,7 @@ void Draw14(cv::Mat& img, const std::vector<ZQ_CNN_PersonPose::BBox>& output)
 	{
 		const ZQ_CNN_PersonPose::BBox& bbox = output[nn];
 		cv::rectangle(img, cv::Point(bbox.col1, bbox.row1), cv::Point(bbox.col2, bbox.row2), cv::Scalar(0, 255, 0));
-		
+
 		static const int skeleton[26] = {
 			0,1,
 			2,5,
@@ -79,7 +79,6 @@ void Draw14(cv::Mat& img, const std::vector<ZQ_CNN_PersonPose::BBox>& output)
 		}
 	}
 }
-
 
 void Draw10(cv::Mat& img, const std::vector<ZQ_CNN_PersonPose::BBox>& output)
 {
@@ -146,7 +145,7 @@ int main()
 
 #if defined(_WIN32)
 	if (!detector.Init("model/MobileNetSSD_deploy.zqparams", "model/MobileNetSSD_deploy.nchwbin", "detection_out", 15,
-		"model/Pose-zq117.zqparams", "model/Pose-zq117.nchwbin", "CPM/stage_0_out"))
+		"model/Pose-zq29.zqparams", "model/Pose-zq29.nchwbin", "CPM/stage_1_out"))
 #else
 	if (!detector.Init("../../model/MobileNetSSD_deploy.zqparams", "../../model/MobileNetSSD_deploy.nchwbin", "detection_out", 15,
 		"../../model/det17-dw112.zqparams", "../../model/det17-dw112-5340.nchwbin", "conv6-3"))
@@ -156,30 +155,57 @@ int main()
 		return EXIT_FAILURE;
 	}
 
-#if defined(_WIN32)
-	Mat img = imread("data/000092.jpg", 1);
-#else
-	Mat img = imread("../../data/1.jpg", 1);
-#endif
-	if (img.empty())
-	{
-		cout << "failed to load image\n";
-		return EXIT_FAILURE;
-	}
-	if (img.channels() == 1)
-		cv::cvtColor(img, img, CV_GRAY2BGR);
-
+	cv::VideoCapture cap("pose-video-0919.mp4");//1
+											 
+	cv::VideoWriter writer;
+	cv::Mat image0, ori_im;
 	std::vector<ZQ_CNN_PersonPose::BBox> output;
-	detector.Detect(output, img.data, img.cols, img.rows, img.step[0], 0.5, false);
 
-	if (output.size() > 0 && output[0].num_points == 14)
-		Draw14(img, output);
-	else
-		Draw10(img, output);
-	namedWindow("PersonPose");
+	cv::namedWindow("show");
+	while (true)
+	{
+		cap >> image0;
 
-	imshow("PersonPose", img);
-	cv::imwrite("PersonPose.jpg", img);
-	waitKey(0);
+		if (image0.empty())
+			break;
+		//printf("w x h = %d x %d\n", image0.cols, image0.rows);
+		//cv::flip(image0, image0, 1);
+		image0 = image0(cv::Rect(656, 0, 607, 1080));
+		//cv::resize(image0, image0, cv::Size(), 0.5, 0.5);
+		image0.copyTo(ori_im);
+		cv::GaussianBlur(image0, image0, cv::Size(3, 3), 2, 2);
+		cv::GaussianBlur(image0, image0, cv::Size(3, 3), 2, 2);
+		cv::GaussianBlur(image0, image0, cv::Size(3, 3), 2, 2);
+		cv::GaussianBlur(image0, image0, cv::Size(3, 3), 2, 2);
+		cv::GaussianBlur(image0, image0, cv::Size(3, 3), 2, 2);
+		
+
+		if (!writer.isOpened())
+			writer.open("cam-pose-zq32-1.mp4", CV_FOURCC('X', 'V', 'I', 'D'), 25, cv::Size(image0.cols, image0.rows));
+		static int fr_id = 0;
+		//printf("fr_id = %d\n", fr_id);
+		if (!detector.Detect(output, image0.data, image0.cols, image0.rows, image0.step[0], 0.5, false))
+		{
+			printf("%d\n", fr_id);
+		}
+
+		if(output.size() > 0 && output[0].num_points == 14)
+ 			Draw14(ori_im, output);
+		else
+			Draw10(ori_im, output);
+
+		imshow("show", ori_im);
+		char buf[200];
+		sprintf_s(buf, 20, "out-pose\\%d.png", fr_id);
+		//cv::imwrite(buf, ori_im);
+		writer << ori_im;
+		int key = cv::waitKey(10);
+		if (key == 27)
+			break;
+
+		fr_id++;
+	}
+
 	return EXIT_SUCCESS;
+
 }

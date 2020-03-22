@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="SampleLnet240.cpp">
+    <ClCompile Include="SamplePersonPoseVideo.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

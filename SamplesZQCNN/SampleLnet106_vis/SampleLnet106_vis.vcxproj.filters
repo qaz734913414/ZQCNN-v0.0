@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="SampleVideoFaceDetection.cpp">
+    <ClCompile Include="SampleLnet106_vis.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

@@ -19,9 +19,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{BB382C69-8158-41F1-A382-AF07DEBBA7AF}</ProjectGuid>
+    <ProjectGuid>{EA8BF3F1-5578-44A1-9E38-ED33C5802FEF}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>SampleVideoFaceDetection</RootNamespace>
+    <RootNamespace>SampleLnet106_vis</RootNamespace>
     <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -103,7 +103,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(SolutionDir)ZQCNN;$(SolutionDir)3rdparty\include;$(SolutionDir)3rdparty\opencv\build\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)ZQCNN;$(SolutionDir)\3rdparty\include;$(SolutionDir)3rdparty\opencv\build\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -140,7 +140,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(SolutionDir)ZQCNN;$(SolutionDir)3rdparty\include;$(SolutionDir)3rdparty\opencv\build\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)ZQCNN;$(SolutionDir)\3rdparty\include;$(SolutionDir)3rdparty\opencv\build\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -152,7 +152,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="SampleVideoFaceDetection.cpp" />
+    <ClCompile Include="SampleLnet106_vis.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
